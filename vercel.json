@@ -1,5 +1,14 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "regions": ["fra1"],
+  "functions": {
+    "api/page.js": { "includeFiles": "app.html", "maxDuration": 10 }
+  },
+  "rewrites": [
+    { "source": "/", "destination": "/api/page" },
+    { "source": "/sitemap.xml", "destination": "/api/page?sitemap=1" },
+    { "source": "/:slug([a-z0-9-]+)", "destination": "/api/page?slug=:slug" }
+  ],
   "headers": [
     {
       "source": "/(.*)",
