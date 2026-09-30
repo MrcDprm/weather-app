@@ -29,6 +29,7 @@ A weather app in plain HTML, CSS and JavaScript. Search any city or district, or
   - A 5-day forecast.
   - The place's local time.
   - Night-time icons.
+- **An address for every city:** each of Türkiye's 81 provinces and the world capitals has its own page, such as [weather.miracdeprem.com/istanbul](https://weather.miracdeprem.com/istanbul), in Turkish and English (`?lang=en`).
 - **Saved cities and recent searches**, kept in your browser.
 - **One unit switch:** °C and km/h, or °F and mph. It updates every screen instantly, without a new request.
 - **Turkish and English**, and a dark and a light theme matching [my portfolio](https://www.miracdeprem.com).
@@ -72,7 +73,11 @@ npm test
 ### Project structure
 
 ```
-index.html, styles.css    Page and styles
+app.html, styles.css      Page template and styles
+api/page.js               Serves every address (/, /istanbul, /londra …) with its own title, description and structured data
+lib/                      <head> builder and sitemap for the page function
+src/routes.js             Addresses: 81 provinces and 8 world capitals
+src/provinces.js          Coordinates and regions of Türkiye's 81 provinces
 src/weather.js            Turns forecast responses into simple objects; weather codes, unit conversion
 src/places.js             Built-in cities, search results from both sources, merging and ranking
 src/storage.js            Settings, saved cities and recent searches, validated on every read
@@ -80,7 +85,7 @@ src/api.js                Requests to Open-Meteo, Photon and BigDataCloud with t
 src/chart.js              The 24-hour SVG chart
 src/icons.js              Weather icons drawn as SVG paths
 src/main.js               Screens, search, location, language, units and theme
-scripts/dev-server.mjs    Local server with the same headers as vercel.json
+scripts/dev-server.mjs    Local server with the same headers and rewrites as vercel.json
 tests/                    Unit tests
 ```
 

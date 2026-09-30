@@ -29,6 +29,7 @@ Sade HTML, CSS ve JavaScript ile yazılmış bir hava durumu uygulaması. Bir ş
   - 5 günlük tahmin.
   - Şehrin yerel saati.
   - Gece için ay simgeleri.
+- **Her şehrin kendi adresi:** Türkiye'nin 81 ili ve dünya başkentlerinin her birinin Türkçe ve İngilizce (`?lang=en`) kendi sayfası var. Örnek: [weather.miracdeprem.com/istanbul](https://weather.miracdeprem.com/istanbul).
 - **Kayıtlı şehirler ve son aramalar:** Tarayıcında saklanıyor.
 - **Tek birim düğmesi:** °C ve km/sa ya da °F ve mph. Yeni istek atmadan bütün ekranları anında güncelliyor.
 - **Türkçe ve İngilizce**, [portfolyo sitemle](https://www.miracdeprem.com) uyumlu koyu ve açık tema.
@@ -72,7 +73,11 @@ npm test
 ### Proje yapısı
 
 ```
-index.html, styles.css    Sayfa ve stiller
+app.html, styles.css      Sayfa şablonu ve stiller
+api/page.js               Her adresi (/, /istanbul, /londra …) kendi başlığı, açıklaması ve yapılandırılmış verisiyle sunar
+lib/                      Sayfa fonksiyonu için <head> üreticisi ve sitemap
+src/routes.js             Adresler: 81 il ve 8 dünya başkenti
+src/provinces.js          Türkiye'nin 81 ilinin koordinatı ve bölgesi
 src/weather.js            Tahmin yanıtlarını sade nesnelere çevirir; hava kodları, birim dönüşümü
 src/places.js             Sabit şehirler, iki kaynaktan gelen arama sonuçları, birleştirme ve sıralama
 src/storage.js            Ayarlar, kayıtlı şehirler ve son aramalar; her okumada doğrulanır
@@ -80,7 +85,7 @@ src/api.js                Open-Meteo, Photon ve BigDataCloud istekleri (zaman a�
 src/chart.js              24 saatlik SVG grafik
 src/icons.js              SVG çizgileriyle çizilmiş hava simgeleri
 src/main.js               Ekranlar, arama, konum, dil, birim ve tema
-scripts/dev-server.mjs    vercel.json'daki başlıkları kullanan yerel sunucu
+scripts/dev-server.mjs    vercel.json'daki başlıkları ve yönlendirmeleri uygulayan yerel sunucu
 tests/                    Birim testleri
 ```
 
