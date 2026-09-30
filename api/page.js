@@ -6,7 +6,7 @@ import { renderPage, renderSitemap } from '../lib/page-seo.js';
 const CACHE = 'public, max-age=0, s-maxage=86400, stale-while-revalidate=604800';
 let template;
 
-export async function GET(request) {
+async function respond(request) {
   const params = new URL(request.url).searchParams;
   if (params.get('sitemap') === '1') {
     return new Response(renderSitemap(), {
@@ -22,4 +22,21 @@ export async function GET(request) {
     status,
     headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': CACHE },
   });
+}
+
+/**
+ * Sayfa kurulurken beklenmedik bir hata olursa site kapanmasın: şablon okunabildiyse olduğu gibi
+ * (SEO eki olmadan, dizine eklenmeyen hâliyle) sunulur, okunamadıysa statik yedeğe (/app.html) gidilir.
+ * Hatanın ayrıntısı kullanıcıya değil, sunucu loguna yazılır.
+ */
+export async function GET(request) {
+  try {
+    return await respond(request);
+  } catch (error) {
+    console.error('Page render failed:', error);
+    if (template) {
+      return new Response(template, { headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' } });
+    }
+    return Response.redirect(new URL('/app.html', request.url), 302);
+  }
 }
