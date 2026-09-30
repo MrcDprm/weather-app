@@ -5,8 +5,7 @@ import { cleanPlace, isPlace, samePlace } from './places.js';
 export const STORAGE_KEY = 'weather-settings';
 export const LANGUAGES = ['tr', 'en'];
 export const THEMES = ['dark', 'light'];
-export const TEMP_UNITS = ['c', 'f'];
-export const WIND_UNITS = ['kmh', 'mph'];
+export const UNITS = ['metric', 'imperial']; // metric: °C ve km/sa, imperial: °F ve mph
 export const MAX_SAVED = 8;
 export const MAX_RECENT = 5;
 
@@ -35,8 +34,7 @@ export function loadSettings(storage = browserStorage(), fallbackLang = 'tr') {
   return {
     lang: oneOf(saved.lang, LANGUAGES, fallbackLang),
     theme: oneOf(saved.theme, THEMES, 'dark'),
-    tempUnit: oneOf(saved.tempUnit, TEMP_UNITS, 'c'),
-    windUnit: oneOf(saved.windUnit, WIND_UNITS, 'kmh'),
+    units: oneOf(saved.units, UNITS, 'metric'),
     saved: placeList(saved.saved, MAX_SAVED),
     recent: placeList(saved.recent, MAX_RECENT),
   };

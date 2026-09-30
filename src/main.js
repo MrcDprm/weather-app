@@ -20,8 +20,7 @@ const t = (key, params) => translate(settings.lang, key, params);
 const $ = (id) => document.getElementById(id);
 const el = {
   langButtons: document.querySelectorAll('[data-lang]'),
-  tempButtons: document.querySelectorAll('[data-temp-unit]'),
-  windButtons: document.querySelectorAll('[data-wind-unit]'),
+  unitButtons: document.querySelectorAll('[data-units]'),
   themeToggle: $('theme-toggle'),
   searchForm: $('search-form'),
   search: $('search'),
@@ -68,8 +67,12 @@ const state = {
 };
 
 // ---------- Biçimlendirme ----------
-const formatTemp = (celsius) => `${convertTemp(celsius, settings.tempUnit)}°`;
-const formatWind = (kmh) => `${convertWind(kmh, settings.windUnit)} ${t(`unit_${settings.windUnit}`)}`;
+const imperial = () => settings.units === 'imperial';
+const formatTemp = (celsius) => `${convertTemp(celsius, imperial() ? 'f' : 'c')}°`;
+const formatWind = (kmh) => {
+  const unit = imperial() ? 'mph' : 'kmh';
+  return `${convertWind(kmh, unit)} ${t(`unit_${unit}`)}`;
+};
 const formatPercent = (value) => (settings.lang === 'tr' ? `%${value}` : `${value}%`); // Türkçede yüzde işareti önde
 
 function formatDay(date, index) {
@@ -114,7 +117,7 @@ function cityCard(place) {
       head,
       iconSvg(look.icon, 'city-icon'),
       textNode('span', 'city-temp', formatTemp(weather.temp)),
-      textNode('span', 'city-desc', t(look.key)),
+      textNode('span', 'city-desc', [t(look.key), weather.wind === null ? '' : formatWind(weather.wind)].filter(Boolean).join(' · ')),
     );
   } else {
     button.append(head, textNode('span', 'city-temp muted', '—'));
@@ -386,8 +389,7 @@ function renderLanguage() {
 }
 
 function renderUnits() {
-  for (const button of el.tempButtons) button.setAttribute('aria-pressed', String(button.dataset.tempUnit === settings.tempUnit));
-  for (const button of el.windButtons) button.setAttribute('aria-pressed', String(button.dataset.windUnit === settings.windUnit));
+  for (const button of el.unitButtons) button.setAttribute('aria-pressed', String(button.dataset.units === settings.units));
 }
 
 /** Dil ya da birim değişince her şey yeni ayarla yeniden yazılır (yeni istek atılmaz). */
@@ -408,17 +410,9 @@ for (const button of el.langButtons) {
   });
 }
 
-for (const button of el.tempButtons) {
+for (const button of el.unitButtons) {
   button.addEventListener('click', () => {
-    settings.tempUnit = button.dataset.tempUnit;
-    saveSettings(settings);
-    renderAll();
-  });
-}
-
-for (const button of el.windButtons) {
-  button.addEventListener('click', () => {
-    settings.windUnit = button.dataset.windUnit;
+    settings.units = button.dataset.units;
     saveSettings(settings);
     renderAll();
   });

@@ -11,14 +11,14 @@ const city = (id, lat = 1, lon = 1) => ({ id, name: `City ${id}`, region: '', co
 
 test('defaults when nothing is stored', () => {
   assert.deepEqual(loadSettings(fakeStorage(), 'en'), {
-    lang: 'en', theme: 'dark', tempUnit: 'c', windUnit: 'kmh', saved: [], recent: [],
+    lang: 'en', theme: 'dark', units: 'metric', saved: [], recent: [],
   });
 });
 
 test('broken JSON and unknown values fall back to defaults', () => {
-  assert.equal(loadSettings(fakeStorage('{not json')).tempUnit, 'c');
-  const settings = loadSettings(fakeStorage(JSON.stringify({ lang: 'de', theme: 'pink', tempUnit: 'k', windUnit: 5, saved: 'x' })));
-  assert.deepEqual(settings, { lang: 'tr', theme: 'dark', tempUnit: 'c', windUnit: 'kmh', saved: [], recent: [] });
+  assert.equal(loadSettings(fakeStorage('{not json')).units, 'metric');
+  const settings = loadSettings(fakeStorage(JSON.stringify({ lang: 'de', theme: 'pink', units: 'kelvin', saved: 'x' })));
+  assert.deepEqual(settings, { lang: 'tr', theme: 'dark', units: 'metric', saved: [], recent: [] });
 });
 
 test('stored cities are validated and cleaned', () => {
@@ -44,7 +44,7 @@ test('a closed storage does not crash', () => {
 
 test('save and load round trip', () => {
   const storage = fakeStorage();
-  const settings = { ...loadSettings(storage), tempUnit: 'f', saved: [city('a')] };
+  const settings = { ...loadSettings(storage), units: 'imperial', saved: [city('a')] };
   saveSettings(settings, storage);
   assert.deepEqual(loadSettings(storage), settings);
 });
