@@ -1,0 +1,8 @@
+# Sitede gerekmeyen dosyalar Vercel'e yüklenmez: testler, geliştirme betikleri, dokümanlar
+tests/
+scripts/
+docs/
+README.md
+README.tr.md
+LICENSE
+.gitignore
