@@ -9,7 +9,7 @@ A weather app in plain HTML, CSS and JavaScript. Search any city or use your loc
 ## Plan
 
 ### MVP
-- Home screen with İstanbul, Ankara, İzmir and Bursa: current temperature and conditions at a glance.
+- Home screen with İstanbul, Ankara, İzmir and Bursa, plus world capitals (London, Paris, Berlin, Rome, Madrid, Washington, Tokyo, Beijing): current temperature and conditions at a glance.
 - City search with suggestions (Open-Meteo geocoding).
 - "Use my location" (optional). If permission is denied, a short notice explains it and search still works.
 - Detail view: current weather (feels like, humidity, wind), a 24-hour temperature and rain chart (SVG, no library), and a 5-day forecast.

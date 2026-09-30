@@ -9,7 +9,7 @@ Sade HTML, CSS ve JavaScript ile yazılmış bir hava durumu uygulaması. Bir ş
 ## Plan
 
 ### MVP
-- İstanbul, Ankara, İzmir ve Bursa'nın bulunduğu ana sayfa: anlık sıcaklık ve hava durumu tek bakışta.
+- İstanbul, Ankara, İzmir ve Bursa ile dünya başkentlerinin (Londra, Paris, Berlin, Roma, Madrid, Washington, Tokyo, Pekin) bulunduğu ana sayfa: anlık sıcaklık ve hava durumu tek bakışta.
 - Önerili şehir arama (Open-Meteo geocoding).
 - "Konumumu kullan" (isteğe bağlı). İzin verilmezse kısa bir uyarı çıkar, arama çalışmaya devam eder.
 - Ayrıntı görünümü: anlık hava (hissedilen, nem, rüzgâr), 24 saatlik sıcaklık ve yağış grafiği (SVG, kütüphanesiz), 5 günlük tahmin.

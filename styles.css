@@ -1,0 +1,907 @@
+/* Tema: miracdeprem.com "Gece Şehri" paleti. Renkler RGB üçlüsü; rgb(var(--c-accent) / 0.3) ile saydamlık verilebilir. */
+:root {
+  --c-bg: 11 15 21;
+  --c-surface: 19 26 37;
+  --c-elevated: 27 36 50;
+  --c-line: 41 52 68;
+  --c-ink: 236 239 244;
+  --c-muted: 156 167 184;
+  --c-subtle: 107 120 139;
+  --c-accent: 245 199 126;
+  --c-accent-strong: 255 217 154;
+  --c-accent-ink: 26 19 5;
+  --c-o: 130 170 255;
+  --font-display: 'Space Grotesk', system-ui, sans-serif;
+  --font-sans: 'IBM Plex Sans', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+  --sky: radial-gradient(1200px 600px at 85% -10%, rgb(245 199 126 / 0.07), transparent 60%),
+    radial-gradient(1.5px 1.5px at 12% 18%, rgb(236 239 244 / 0.7), transparent),
+    radial-gradient(1px 1px at 28% 42%, rgb(236 239 244 / 0.5), transparent),
+    radial-gradient(1.5px 1.5px at 47% 12%, rgb(236 239 244 / 0.6), transparent),
+    radial-gradient(1px 1px at 66% 34%, rgb(236 239 244 / 0.5), transparent),
+    radial-gradient(1.5px 1.5px at 78% 8%, rgb(236 239 244 / 0.7), transparent),
+    radial-gradient(1px 1px at 91% 48%, rgb(236 239 244 / 0.4), transparent),
+    radial-gradient(1px 1px at 7% 63%, rgb(236 239 244 / 0.4), transparent),
+    rgb(var(--c-bg));
+  color-scheme: dark;
+}
+
+[data-theme='light'] {
+  /* Alacakaranlık: kırık beyaz ve gri-mavi tonlar, yıldız yok */
+  --c-bg: 222 228 236;
+  --c-surface: 236 240 245;
+  --c-elevated: 229 234 241;
+  --c-line: 196 205 217;
+  --c-ink: 22 30 46;
+  --c-muted: 72 84 104;
+  --c-subtle: 104 117 138;
+  --c-accent: 166 77 10;
+  --c-accent-strong: 134 60 12;
+  --c-accent-ink: 255 250 243;
+  --c-o: 36 80 190;
+  --sky: linear-gradient(180deg, #d3dce8 0%, #dde3eb 50%, #e4ddd4 100%);
+  color-scheme: light;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--sky) fixed;
+  color: rgb(var(--c-ink));
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+button,
+input {
+  font: inherit;
+  color: inherit;
+}
+
+a {
+  color: rgb(var(--c-accent));
+  text-decoration: none;
+}
+a:hover {
+  color: rgb(var(--c-accent-strong));
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+:focus-visible {
+  outline: 2px solid rgb(var(--c-accent) / 0.7);
+  outline-offset: 2px;
+}
+
+::selection {
+  background: rgb(var(--c-accent) / 0.3);
+}
+
+/* ---------- Üst çubuk ---------- */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  width: 100%;
+  max-width: 64rem;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: rgb(var(--c-muted));
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+}
+.brand:hover {
+  text-decoration: none;
+  color: rgb(var(--c-ink));
+}
+
+.brand-logo {
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border: 1px solid rgb(var(--c-accent) / 0.6);
+  border-radius: 0.6rem;
+  color: rgb(var(--c-accent));
+  font-weight: 500;
+}
+
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.lang-switch {
+  display: flex;
+  padding: 0.2rem;
+  border: 1px solid rgb(var(--c-line) / 0.7);
+  border-radius: 0.5rem;
+  background: rgb(var(--c-surface) / 0.6);
+}
+.lang-switch button {
+  padding: 0.25rem 0.55rem;
+  border: 0;
+  border-radius: 0.35rem;
+  background: none;
+  color: rgb(var(--c-subtle));
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+.lang-switch button[aria-pressed='true'] {
+  background: rgb(var(--c-accent) / 0.15);
+  color: rgb(var(--c-accent));
+}
+
+.icon-button {
+  display: grid;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border: 0;
+  border-radius: 0.5rem;
+  background: none;
+  color: rgb(var(--c-muted));
+  cursor: pointer;
+}
+.icon-button:hover {
+  background: rgb(var(--c-ink) / 0.06);
+  color: rgb(var(--c-ink));
+}
+.icon-button svg {
+  width: 1.25rem;
+  height: 1.25rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+/* Koyu temada güneş (açığa geç), açık temada ay (koyuya geç) görünür */
+.icon-moon,
+[data-theme='light'] .icon-sun {
+  display: none;
+}
+[data-theme='light'] .icon-moon {
+  display: block;
+}
+
+/* ---------- Sayfa ---------- */
+.page {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 64rem;
+  margin: 0 auto;
+  padding: 0.5rem 1rem 1.5rem;
+}
+
+.intro {
+  text-align: center;
+}
+
+h1 {
+  margin: 0 0 0.25rem;
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 7vw, 3rem);
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  line-height: 1.05;
+  text-shadow: 0 0 40px rgb(var(--c-accent) / 0.15);
+}
+
+.tagline {
+  margin: 0 0 1.25rem;
+  color: rgb(var(--c-muted));
+}
+
+/* ---------- Butonlar ---------- */
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem;
+}
+.btn {
+  padding: 0.6rem 1.1rem;
+  border: 1px solid transparent;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.btn-primary {
+  background: rgb(var(--c-accent));
+  color: rgb(var(--c-accent-ink));
+  font-weight: 600;
+}
+.btn-primary:hover {
+  background: rgb(var(--c-accent-strong));
+}
+
+.btn-secondary {
+  border-color: rgb(var(--c-accent) / 0.6);
+  background: rgb(var(--c-surface) / 0.7);
+  color: rgb(var(--c-accent));
+}
+.btn-secondary:not([aria-disabled='true']):hover {
+  background: rgb(var(--c-accent) / 0.12);
+}
+.btn[aria-disabled='true'] {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.btn-ghost {
+  background: none;
+  color: rgb(var(--c-muted));
+}
+.btn-ghost:hover {
+  background: rgb(var(--c-ink) / 0.06);
+  color: rgb(var(--c-ink));
+}
+
+/* ---------- Alt bilgi ---------- */
+.footer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1.5rem 1rem;
+  border-top: 1px solid rgb(var(--c-line) / 0.5);
+  color: rgb(var(--c-subtle));
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+}
+.footer-projects,
+.footer-meta {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem 1.25rem;
+}
+/* Şu an açık olan proje link gibi değil, vurgulu metin gibi görünür */
+.footer-projects [aria-current='page'] {
+  color: rgb(var(--c-ink));
+  pointer-events: none;
+}
+.noscript {
+  text-align: center;
+}
+
+
+/* ========== HAVA DURUMU ========== */
+:root {
+  --c-drop: 130 170 255;
+}
+[data-theme='light'] {
+  --c-drop: 36 80 190;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.card {
+  padding: 1.25rem;
+  border: 1px solid rgb(var(--c-line) / 0.7);
+  border-radius: 1rem;
+  background: rgb(var(--c-surface) / 0.85);
+  box-shadow: 0 20px 50px rgb(0 0 0 / 0.25);
+}
+
+.notice {
+  margin: 0;
+  color: rgb(var(--c-muted));
+  font-size: 0.9rem;
+}
+.notice:empty {
+  display: none;
+}
+
+/* ---------- Arama ve araç çubuğu ---------- */
+.controls,
+.view {
+  width: 100%;
+  max-width: 48rem;
+}
+.controls {
+  display: grid;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.search {
+  position: relative;
+}
+.search-icon {
+  position: absolute;
+  top: 50%;
+  left: 0.9rem;
+  width: 1.1rem;
+  height: 1.1rem;
+  transform: translateY(-50%);
+  fill: none;
+  stroke: rgb(var(--c-subtle));
+  stroke-width: 2;
+  stroke-linecap: round;
+  pointer-events: none;
+}
+.search input {
+  width: 100%;
+  padding: 0.8rem 1rem 0.8rem 2.6rem;
+  border: 1px solid rgb(var(--c-line) / 0.9);
+  border-radius: 0.75rem;
+  background: rgb(var(--c-surface) / 0.9);
+  font-size: 1rem;
+}
+.search input:hover,
+.search input:focus {
+  border-color: rgb(var(--c-accent) / 0.6);
+}
+.search input::placeholder {
+  color: rgb(var(--c-subtle));
+}
+
+.results {
+  position: absolute;
+  top: calc(100% + 0.35rem);
+  left: 0;
+  right: 0;
+  z-index: 10;
+  margin: 0;
+  padding: 0.35rem;
+  border: 1px solid rgb(var(--c-line));
+  border-radius: 0.75rem;
+  background: rgb(var(--c-surface));
+  box-shadow: 0 20px 40px rgb(0 0 0 / 0.35);
+  list-style: none;
+}
+.result {
+  display: grid;
+  padding: 0.55rem 0.7rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+}
+.result:hover,
+.result[aria-selected="true"] {
+  background: rgb(var(--c-accent) / 0.12);
+}
+.result-name {
+  font-weight: 600;
+}
+.result-detail,
+.result-empty {
+  color: rgb(var(--c-muted));
+  font-size: 0.85rem;
+}
+.result-empty {
+  padding: 0.55rem 0.7rem;
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+.locate,
+.save {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+.locate svg,
+.save svg {
+  width: 1.1rem;
+  height: 1.1rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linejoin: round;
+}
+.locate:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.units {
+  display: flex;
+  gap: 0.5rem;
+}
+.segmented {
+  display: flex;
+  padding: 0.2rem;
+  border: 1px solid rgb(var(--c-line) / 0.7);
+  border-radius: 0.5rem;
+  background: rgb(var(--c-surface) / 0.6);
+}
+.segmented button {
+  padding: 0.3rem 0.6rem;
+  border: 0;
+  border-radius: 0.35rem;
+  background: none;
+  color: rgb(var(--c-subtle));
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+.segmented button[aria-pressed="true"] {
+  background: rgb(var(--c-accent) / 0.15);
+  color: rgb(var(--c-accent));
+}
+
+/* ---------- Simgeler ---------- */
+.wx-icon {
+  flex: none;
+  fill: none;
+  stroke: rgb(var(--c-muted));
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.wx-icon .tone-sun {
+  stroke: rgb(var(--c-accent));
+}
+.wx-icon .tone-drop {
+  stroke: rgb(var(--c-drop));
+}
+
+/* ---------- Ana sayfa ---------- */
+.group + .group {
+  margin-top: 1.5rem;
+}
+.group-title {
+  margin: 0 0 0.6rem;
+  color: rgb(var(--c-subtle));
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  font-weight: 400;
+}
+.group-title::before {
+  content: "// ";
+}
+
+.city-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(10.5rem, 1fr));
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.city-card {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-areas:
+    "head icon"
+    "temp icon"
+    "desc desc";
+  align-items: center;
+  gap: 0.15rem 0.5rem;
+  width: 100%;
+  height: 100%;
+  padding: 1rem;
+  border: 1px solid rgb(var(--c-line) / 0.7);
+  border-radius: 1rem;
+  background: rgb(var(--c-surface) / 0.85);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s, transform 0.15s;
+}
+.city-card:hover {
+  border-color: rgb(var(--c-accent) / 0.6);
+  transform: translateY(-2px);
+}
+.city-head {
+  grid-area: head;
+  display: grid;
+  min-width: 0;
+}
+.city-name {
+  font-family: var(--font-display);
+  font-weight: 600;
+}
+.city-detail {
+  overflow: hidden;
+  color: rgb(var(--c-subtle));
+  font-size: 0.75rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.city-icon {
+  grid-area: icon;
+  width: 2.75rem;
+  height: 2.75rem;
+}
+.city-temp {
+  grid-area: temp;
+  font-family: var(--font-display);
+  font-size: 1.9rem;
+  font-weight: 600;
+  line-height: 1.1;
+}
+.city-temp.muted {
+  color: rgb(var(--c-subtle));
+}
+.city-desc {
+  grid-area: desc;
+  color: rgb(var(--c-muted));
+  font-size: 0.85rem;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.chip {
+  padding: 0.35rem 0.8rem;
+  border: 1px solid rgb(var(--c-line) / 0.8);
+  border-radius: 999px;
+  background: rgb(var(--c-surface) / 0.7);
+  color: rgb(var(--c-ink));
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+.chip:hover {
+  border-color: rgb(var(--c-accent) / 0.6);
+  color: rgb(var(--c-accent));
+}
+
+/* ---------- Ayrıntı ---------- */
+.detail-bar {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+.save[aria-pressed="true"] svg {
+  fill: currentColor;
+}
+.detail-status {
+  margin-bottom: 0.75rem;
+}
+.retry {
+  margin-bottom: 1rem;
+}
+.detail {
+  display: grid;
+  /* minmax(0, 1fr): içerideki geniş grafik sütunu ekrandan taşırmasın */
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1rem;
+}
+.detail[hidden],
+.retry[hidden],
+.save[hidden] {
+  display: none;
+}
+
+.now {
+  display: grid;
+  gap: 1rem;
+  border-color: rgb(var(--c-accent) / 0.4);
+  background:
+    radial-gradient(120% 140% at 100% 0%, rgb(var(--c-accent) / 0.1), transparent 60%),
+    rgb(var(--c-surface) / 0.85);
+}
+.place-name {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  line-height: 1.15;
+}
+.place-name:focus {
+  outline: none;
+}
+.place-meta {
+  margin: 0.2rem 0 0;
+  color: rgb(var(--c-subtle));
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+}
+.now-main {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+.now-icon {
+  width: 4.5rem;
+  height: 4.5rem;
+}
+.now-temp {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 3.5rem;
+  font-weight: 600;
+  line-height: 1;
+}
+.now-desc {
+  margin: 0.25rem 0 0;
+  color: rgb(var(--c-muted));
+}
+.now-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+  margin: 0;
+}
+.now-stats div {
+  padding: 0.5rem;
+  border: 1px solid rgb(var(--c-line) / 0.7);
+  border-radius: 0.75rem;
+  background: rgb(var(--c-elevated) / 0.6);
+  text-align: center;
+}
+.now-stats dt {
+  color: rgb(var(--c-muted));
+  font-size: 0.75rem;
+}
+.now-stats dd {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 1.05rem;
+  white-space: nowrap;
+}
+
+.card-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+}
+.chart-legend {
+  margin: 0.15rem 0 0.5rem;
+  color: rgb(var(--c-subtle));
+  font-size: 0.75rem;
+}
+/* Dar ekranda grafik ezilmesin; yatay kaydırılır */
+.chart-scroll {
+  overflow-x: auto;
+}
+.chart {
+  display: block;
+  width: 100%;
+  min-width: 36rem;
+  height: auto;
+}
+.chart-base {
+  stroke: rgb(var(--c-line));
+}
+.chart-bar {
+  fill: rgb(var(--c-drop) / 0.55);
+}
+.chart-line {
+  fill: none;
+  stroke: rgb(var(--c-accent));
+  stroke-width: 2.5;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+.chart-dot {
+  fill: rgb(var(--c-surface));
+  stroke: rgb(var(--c-accent));
+  stroke-width: 2;
+}
+.chart-temp,
+.chart-hour {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  text-anchor: middle;
+}
+.chart-temp {
+  fill: rgb(var(--c-ink));
+}
+.chart-hour {
+  fill: rgb(var(--c-subtle));
+}
+
+.days {
+  display: grid;
+  margin: 0.5rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+.day {
+  display: grid;
+  grid-template-columns: 6.5rem 2rem 1fr auto auto;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 0;
+  border-top: 1px solid rgb(var(--c-line) / 0.5);
+}
+.day:first-child {
+  border-top: 0;
+}
+.day-name {
+  font-weight: 500;
+}
+.day-icon {
+  width: 2rem;
+  height: 2rem;
+}
+.day-desc {
+  color: rgb(var(--c-muted));
+  font-size: 0.9rem;
+}
+.day-rain {
+  color: rgb(var(--c-drop));
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+}
+.day-temps {
+  min-width: 5.5rem;
+  font-family: var(--font-mono);
+  text-align: right;
+}
+
+@media (max-width: 640px) {
+  .toolbar {
+    justify-content: center;
+  }
+  .now-temp {
+    font-size: 2.9rem;
+  }
+  .now-stats dd {
+    font-size: 0.9rem;
+  }
+  .day {
+    grid-template-columns: 1fr 1.75rem auto auto;
+    gap: 0.5rem;
+  }
+  .day-desc {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .city-card {
+    transition: none;
+  }
+  .city-card:hover {
+    transform: none;
+  }
+}
+/* ---------- Geri bildirim penceresi ---------- */
+/* Düğme alt bilginin içinde durur; geniş ekranda sağ alt köşeye sabitlenir.
+   Telefonda sabitlenmez ki oyun düğmelerinin üstüne binmesin. */
+.fb-open {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.8rem;
+  border: 1px solid rgb(var(--c-line) / 0.8);
+  border-radius: 999px;
+  background: rgb(var(--c-surface) / 0.85);
+  color: rgb(var(--c-muted));
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s, opacity 0.15s;
+}
+.fb-open:hover,
+.fb-open:focus-visible {
+  border-color: rgb(var(--c-accent) / 0.6);
+  color: rgb(var(--c-accent));
+  opacity: 1;
+}
+.fb-open svg {
+  width: 1rem;
+  height: 1rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linejoin: round;
+}
+@media (min-width: 641px) {
+  .fb-open {
+    position: fixed;
+    right: 1.25rem;
+    bottom: 1.25rem;
+    z-index: 20;
+    backdrop-filter: blur(6px);
+    opacity: 0.7;
+  }
+}
+
+.fb-dialog {
+  width: min(26rem, calc(100vw - 2rem));
+  padding: 1.25rem;
+  border: 1px solid rgb(var(--c-line));
+  border-radius: 1rem;
+  background: rgb(var(--c-surface));
+  color: rgb(var(--c-ink));
+}
+.fb-dialog::backdrop {
+  background: rgb(0 0 0 / 0.55);
+  backdrop-filter: blur(2px);
+}
+.fb-form {
+  display: grid;
+  gap: 0.35rem;
+}
+.fb-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+}
+.fb-intro {
+  margin: 0 0 0.4rem;
+  color: rgb(var(--c-muted));
+  font-size: 0.9rem;
+}
+.fb-label {
+  margin-top: 0.4rem;
+  color: rgb(var(--c-subtle));
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+}
+.fb-input {
+  width: 100%;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid rgb(var(--c-line) / 0.8);
+  border-radius: 0.5rem;
+  background: rgb(var(--c-elevated));
+  color: rgb(var(--c-ink));
+  font: inherit;
+}
+.fb-input:hover {
+  border-color: rgb(var(--c-accent) / 0.6);
+}
+textarea.fb-input {
+  min-height: 6rem;
+  resize: vertical;
+}
+/* Botlar için tuzak alan: ekranda ve ekran okuyucuda görünmez */
+.fb-hp {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+.fb-status {
+  min-height: 1.4em;
+  margin: 0.4rem 0 0;
+  color: rgb(var(--c-muted));
+  font-size: 0.85rem;
+}
+.fb-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 0.3rem;
+}
+.fb-actions .btn:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}

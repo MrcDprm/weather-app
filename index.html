@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Hava Durumu · Miraç Deprem</title>
+    <meta name="description" content="Şehir ara ya da konumunu kullan: anlık hava, 24 saatlik grafik ve 5 günlük tahmin." />
+    <meta name="theme-color" content="#0b0f15" />
+    <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap"
+    />
+    <link rel="stylesheet" href="styles.css" />
+    <script src="src/theme-init.js"></script>
+    <script type="module" src="src/main.js"></script>
+  </head>
+  <body>
+    <header class="topbar">
+      <a class="brand" href="https://www.miracdeprem.com" aria-label="miracdeprem.com">
+        <span class="brand-logo">md</span>
+        <span class="brand-path">~/weather</span>
+      </a>
+      <div class="topbar-actions">
+        <div class="lang-switch" role="group" data-i18n-aria="language">
+          <button type="button" data-lang="tr">TR</button>
+          <button type="button" data-lang="en">EN</button>
+        </div>
+        <button type="button" class="icon-button" id="theme-toggle" data-i18n-aria="toggleTheme">
+          <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="12" cy="12" r="4" />
+            <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" />
+          </svg>
+          <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z" />
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <main class="page">
+      <section class="intro">
+        <h1 data-i18n="title">Hava Durumu</h1>
+        <p class="tagline" data-i18n="tagline"></p>
+      </section>
+
+      <div class="controls">
+        <form class="search" id="search-form" role="search" autocomplete="off">
+          <label class="sr-only" for="search" data-i18n="search"></label>
+          <svg class="search-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="11" cy="11" r="7" />
+            <path d="M20 20l-4-4" />
+          </svg>
+          <input
+            id="search"
+            type="search"
+            maxlength="80"
+            spellcheck="false"
+            role="combobox"
+            aria-autocomplete="list"
+            aria-expanded="false"
+            aria-controls="search-results"
+            data-i18n-placeholder="searchPlaceholder"
+          />
+          <ul class="results" id="search-results" role="listbox" data-i18n-aria="search" hidden></ul>
+        </form>
+
+        <div class="toolbar">
+          <button type="button" class="btn btn-secondary locate" id="locate">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z" />
+              <circle cx="12" cy="9.5" r="2.5" />
+            </svg>
+            <span data-i18n="locate"></span>
+          </button>
+          <div class="units">
+            <div class="segmented" role="group" data-i18n-aria="tempUnit">
+              <button type="button" data-temp-unit="c">°C</button>
+              <button type="button" data-temp-unit="f">°F</button>
+            </div>
+            <div class="segmented" role="group" data-i18n-aria="windUnit">
+              <button type="button" data-wind-unit="kmh" data-i18n="unit_kmh"></button>
+              <button type="button" data-wind-unit="mph" data-i18n="unit_mph"></button>
+            </div>
+          </div>
+        </div>
+
+        <p class="notice" id="notice" role="status"></p>
+      </div>
+
+      <!-- Ana sayfa: kayıtlı şehirler, büyük şehirler, son aramalar -->
+      <section class="view" id="home-view">
+        <section class="group" id="saved-group" hidden>
+          <h2 class="group-title" data-i18n="savedCities"></h2>
+          <ul class="city-grid" id="saved-grid"></ul>
+        </section>
+        <section class="group">
+          <h2 class="group-title" data-i18n="bigCities"></h2>
+          <ul class="city-grid" id="city-grid"></ul>
+        </section>
+        <section class="group">
+          <h2 class="group-title" data-i18n="worldCapitals"></h2>
+          <ul class="city-grid" id="world-grid"></ul>
+        </section>
+        <section class="group" id="recent-group" hidden>
+          <h2 class="group-title" data-i18n="recent"></h2>
+          <ul class="chips" id="recent-list"></ul>
+        </section>
+      </section>
+
+      <!-- Şehir ayrıntısı -->
+      <section class="view" id="detail-view" hidden>
+        <div class="detail-bar">
+          <button type="button" class="btn btn-ghost" id="back">
+            <span aria-hidden="true">←</span> <span data-i18n="back"></span>
+          </button>
+          <button type="button" class="btn btn-secondary save" id="save" aria-pressed="false">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 3.5l2.6 5.3 5.8.8-4.2 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z" />
+            </svg>
+            <span id="save-label"></span>
+          </button>
+        </div>
+
+        <p class="notice detail-status" id="detail-status" role="status"></p>
+        <button type="button" class="btn btn-secondary retry" id="retry" data-i18n="retry" hidden></button>
+
+        <div class="detail" id="detail" hidden>
+          <article class="card now">
+            <div class="now-head">
+              <h2 class="place-name" id="place-name" tabindex="-1"></h2>
+              <p class="place-meta" id="place-meta"></p>
+            </div>
+            <div class="now-main">
+              <svg class="wx-icon now-icon" id="now-icon" aria-hidden="true"></svg>
+              <div>
+                <p class="now-temp" id="now-temp"></p>
+                <p class="now-desc" id="now-desc"></p>
+              </div>
+            </div>
+            <dl class="now-stats">
+              <div><dt data-i18n="feelsLike"></dt><dd id="now-feels"></dd></div>
+              <div><dt data-i18n="humidity"></dt><dd id="now-humidity"></dd></div>
+              <div><dt data-i18n="wind"></dt><dd id="now-wind"></dd></div>
+            </dl>
+          </article>
+
+          <article class="card">
+            <h3 class="card-title" id="chart-title" data-i18n="next24"></h3>
+            <p class="chart-legend" data-i18n="chartLegend"></p>
+            <div class="chart-scroll">
+              <svg class="chart" id="hour-chart" role="img" aria-labelledby="chart-title chart-summary"></svg>
+            </div>
+            <p class="sr-only" id="chart-summary"></p>
+          </article>
+
+          <article class="card">
+            <h3 class="card-title" data-i18n="forecast5"></h3>
+            <ol class="days" id="days"></ol>
+          </article>
+        </div>
+      </section>
+    </main>
+
+    <dialog class="fb-dialog" id="fb-dialog" aria-labelledby="fb-title">
+      <form class="fb-form" id="fb-form" novalidate>
+        <h2 class="fb-title" id="fb-title" data-i18n="feedbackTitle"></h2>
+        <p class="fb-intro" data-i18n="feedbackIntro"></p>
+        <label class="fb-label" for="fb-name" data-i18n="feedbackName"></label>
+        <input class="fb-input" id="fb-name" type="text" maxlength="100" autocomplete="name" />
+        <label class="fb-label" for="fb-contact" data-i18n="feedbackContact"></label>
+        <input class="fb-input" id="fb-contact" type="text" maxlength="255" autocomplete="email" required />
+        <label class="fb-label" for="fb-message" data-i18n="feedbackMessage"></label>
+        <textarea class="fb-input" id="fb-message" rows="4" maxlength="2000" required></textarea>
+        <div class="fb-hp" aria-hidden="true">
+          <label for="fb-website">Website</label>
+          <input id="fb-website" type="text" tabindex="-1" autocomplete="off" />
+        </div>
+        <p class="fb-status" id="fb-status" role="status"></p>
+        <div class="fb-actions">
+          <button type="button" class="btn btn-ghost" id="fb-close" data-i18n="feedbackClose"></button>
+          <button type="submit" class="btn btn-primary" id="fb-submit" data-i18n="feedbackSend"></button>
+        </div>
+      </form>
+    </dialog>
+
+    <footer class="footer">
+      <button type="button" class="fb-open" id="fb-open">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z" /></svg>
+        <span data-i18n="feedback"></span>
+      </button>
+      <nav class="footer-projects" data-i18n-aria="jsProjects">
+        <a href="https://tictactoe.miracdeprem.com">Tic-Tac-Toe</a>
+        <a href="https://hangman.miracdeprem.com">Hangman</a>
+        <a href="https://quiz.miracdeprem.com">Quiz App</a>
+        <a href="https://weather.miracdeprem.com" aria-current="page">Weather App</a>
+      </nav>
+      <div class="footer-meta">
+        <span>© 2026 Miraç Deprem</span>
+        <a href="https://www.miracdeprem.com" data-i18n="portfolio"></a>
+        <a href="https://github.com/MrcDprm/weather-app" data-i18n="source"></a>
+        <a href="https://open-meteo.com/" data-i18n="dataSource"></a>
+      </div>
+    </footer>
+
+    <noscript><p class="noscript">Bu uygulama JavaScript gerektirir. · This app requires JavaScript.</p></noscript>
+  </body>
+</html>
