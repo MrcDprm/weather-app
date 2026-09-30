@@ -1,6 +1,6 @@
 // Arayüz: ekranlar, arama, konum, birimler. Veri api.js'ten gelir; bütün metinler textContent ile yazılır.
-import { fetchCurrent, fetchForecast, searchPlaces } from './api.js';
-import { DEFAULT_CITIES, localized, placeDetail, samePlace, WORLD_CITIES } from './places.js';
+import { fetchCurrent, fetchForecast, findLocationName, searchTurkey, searchWorld } from './api.js';
+import { DEFAULT_CITIES, HERE_ID, localized, mergePlaces, placeDetail, samePlace, WORLD_CITIES } from './places.js';
 import { addRecent, loadSettings, MAX_SAVED, saveSettings, toggleSaved } from './storage.js';
 import { convertTemp, convertWind, describeWeather } from './weather.js';
 import { renderChart } from './chart.js';
@@ -11,7 +11,6 @@ import { initFeedback } from './feedback.js';
 
 const SEARCH_DELAY_MS = 300;
 const MIN_QUERY = 2;
-const HERE_ID = 'here';
 
 const browserLang = navigator.language?.toLowerCase().startsWith('tr') ? 'tr' : 'en';
 const settings = loadSettings(undefined, browserLang);
@@ -81,7 +80,8 @@ function formatDay(date, index) {
   return new Intl.DateTimeFormat(settings.lang, { weekday: 'long', timeZone: 'UTC' }).format(new Date(`${date}T12:00:00Z`));
 }
 
-const placeName = (place) => (place.id === HERE_ID ? t('myLocation') : localized(place, 'name', settings.lang));
+// Konumun adı henüz bulunmadıysa (ya da bulunamadıysa) "Konumun" yazar
+const placeName = (place) => (place.id === HERE_ID && !place.name ? t('myLocation') : localized(place, 'name', settings.lang));
 const detailOf = (place) => placeDetail(place, settings.lang);
 
 function iconSvg(name, className) {
@@ -284,9 +284,6 @@ function choosePlace(place) {
 
 function renderResults(message) {
   el.results.replaceChildren();
-  if (message) {
-    el.results.append(textNode('li', 'result-empty', message));
-  }
   state.results.forEach((place, index) => {
     const item = document.createElement('li');
     item.id = `result-${index}`;
@@ -301,26 +298,34 @@ function renderResults(message) {
     });
     el.results.append(item);
   });
+  if (message) el.results.append(textNode('li', 'result-empty', message));
   el.results.hidden = false;
   el.search.setAttribute('aria-expanded', 'true');
   if (state.activeResult >= 0) el.search.setAttribute('aria-activedescendant', `result-${state.activeResult}`);
   else el.search.removeAttribute('aria-activedescendant');
 }
 
-async function runSearch(query) {
+/** İki kaynak aynı anda aranır; hızlı gelen sonuçlar hemen gösterilir, diğeri gelince liste güncellenir. */
+function runSearch(query) {
   const request = ++state.searchRequest;
+  const found = { world: null, turkey: null }; // null: cevap bekleniyor, false: kaynak çalışmadı
   state.results = [];
   renderResults(t('searching'));
-  try {
-    const places = await searchPlaces(query, settings.lang);
-    if (request !== state.searchRequest) return; // kullanıcı yazmaya devam etti
-    state.results = places;
-    state.activeResult = places.length > 0 ? 0 : -1;
-    renderResults(places.length === 0 ? t('noResults') : '');
-  } catch {
-    if (request !== state.searchRequest) return;
-    renderResults(t('searchFailed'));
-  }
+
+  const update = () => {
+    if (request !== state.searchRequest) return; // kullanıcı yazmaya devam etti ya da liste kapandı
+    const waiting = found.world === null || found.turkey === null;
+    state.results = mergePlaces(found.world || [], found.turkey || []);
+    state.activeResult = state.results.length > 0 ? 0 : -1;
+    let message = '';
+    if (waiting) message = t('searching');
+    else if (found.world === false && found.turkey === false) message = t('searchFailed');
+    else if (state.results.length === 0) message = t('noResults');
+    renderResults(message);
+  };
+
+  searchWorld(query, settings.lang).then((places) => { found.world = places; }, () => { found.world = false; }).then(update);
+  searchTurkey(query).then((places) => { found.turkey = places; }, () => { found.turkey = false; }).then(update);
 }
 
 el.search.addEventListener('input', () => {
@@ -364,11 +369,22 @@ function locate() {
   el.notice.textContent = t('locating');
   el.locate.disabled = true;
   navigator.geolocation.getCurrentPosition(
-    (position) => {
+    async (position) => {
       el.locate.disabled = false;
       const { latitude, longitude } = position.coords;
-      // Konum sadece bu istekte kullanılır, hiçbir yere kaydedilmez
-      openPlace({ id: HERE_ID, name: '', region: '', country: '', lat: latitude, lon: longitude });
+      // Konum sadece bu isteklerde kullanılır, hiçbir yere kaydedilmez.
+      // Hava durumu ve yer adı aynı anda istenir; ad gelene kadar "Konumun" yazar.
+      const here = { id: HERE_ID, name: '', region: '', country: '', lat: latitude, lon: longitude };
+      openPlace(here);
+      try {
+        const named = await findLocationName(latitude, longitude, settings.lang);
+        if (named && state.place === here) {
+          state.place = named;
+          renderDetail();
+        }
+      } catch {
+        // Ad bulunamazsa "Konumun" olarak kalır
+      }
     },
     (error) => {
       el.locate.disabled = false;

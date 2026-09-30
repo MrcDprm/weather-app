@@ -1,5 +1,8 @@
 // Şehirler: ana sayfadaki sabit şehirler, arama sonuçlarının doğrulanması ve karşılaştırma.
 const MAX_TEXT = 100;
+const MAX_RESULTS = 6;
+const MAJOR_POPULATION = 1_000_000;
+export const HERE_ID = 'here'; // "Konumumu kullan" ile açılan yer
 
 // Sabit şehirlerin İngilizce adları ...En alanlarında; aramadan gelen şehirler zaten seçilen dilde gelir
 export const DEFAULT_CITIES = [
@@ -56,20 +59,85 @@ export function localized(place, field, lang) {
   return (lang === 'en' && place[`${field}En`]) || place[field] || '';
 }
 
-/** Open-Meteo şehir arama yanıtı. Sonuç yoksa "results" alanı hiç gelmez. */
-export function parsePlaces(raw) {
+/** Arama karşılaştırması için harfleri sadeleştirir: "Şanlıurfa", "sanliurfa" ve "ŞANLIURFA" aynı olur. */
+export function foldText(value) {
+  return value
+    .toLocaleLowerCase('tr')
+    .normalize('NFD') // ş → s + çengel işareti; işaretler bir sonraki satırda silinir
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/ı/g, 'i');
+}
+
+const matches = (name, query) => foldText(name).startsWith(foldText(query));
+
+/** Open-Meteo (GeoNames) sonuçları: dünya şehirleri, adları seçilen dilde gelir ("Londra", "Münih").
+ *  Sadece yerleşim yerleri alınır (havalimanı, baraj, dağ değil). */
+export function parseOpenMeteo(raw, query) {
   const results = Array.isArray(raw?.results) ? raw.results : [];
   return results
+    .filter((result) => String(result?.feature_code ?? '').startsWith('PPL') && matches(text(result.name), query))
     .map((result) => ({
-      id: String(result?.id ?? ''),
-      name: result?.name,
-      region: result?.admin1,
-      country: result?.country,
-      lat: result?.latitude,
-      lon: result?.longitude,
+      place: {
+        id: String(result.id ?? ''),
+        name: result.name,
+        region: result.admin1,
+        country: result.country,
+        lat: result.latitude,
+        lon: result.longitude,
+      },
+      // Başkentler ve büyük şehirler listenin başına alınır
+      major: result.feature_code === 'PPLC' || (Number.isFinite(result.population) && result.population >= MAJOR_POPULATION),
     }))
+    .filter((result) => isPlace(result.place))
+    .map((result) => ({ place: cleanPlace(result.place), major: result.major }));
+}
+
+// Photon sonuç türleri: il ve ilçe merkezleri (city, county) mahallelerden (district) önce gelir
+const PHOTON_ORDER = { city: 0, county: 1 };
+const photonRank = (feature) => PHOTON_ORDER[feature.properties.type] ?? 2;
+
+/** Photon (OpenStreetMap) sonuçları: sadece Türkiye; il ve ilçeleri güncel OSM verisinden bulur. */
+export function parsePhoton(raw, query) {
+  const features = Array.isArray(raw?.features) ? raw.features : [];
+  return features
+    .filter((feature) => feature?.properties?.countrycode === 'TR' && matches(text(feature.properties.name), query))
+    .sort((a, b) => photonRank(a) - photonRank(b)) // sort sıralamayı korur: aynı türdekiler Photon'un sırasında kalır
+    .map((feature) => {
+      const { osm_type: type, osm_id: osmId, name, county, state, country } = feature.properties;
+      const [lon, lat] = Array.isArray(feature.geometry?.coordinates) ? feature.geometry.coordinates : [];
+      // İlçedeki bir mahalleyse "Çubuk, Ankara", ilçe ya da ilse sadece "Ankara"
+      const region = county && county !== name && county !== state ? `${county}, ${state ?? ''}` : state;
+      return { id: `osm-${type}${osmId}`, name, region, country, lat, lon };
+    })
     .filter(isPlace)
     .map(cleanPlace);
+}
+
+const sameResult = (a, b) => foldText(a.name) === foldText(b.name) && Math.abs(a.lat - b.lat) < 0.3 && Math.abs(a.lon - b.lon) < 0.3;
+
+/** İki kaynağı birleştirir: önce büyük şehirler, sonra Türkiye'deki yerler, sonra diğerleri; aynı yer bir kez. */
+export function mergePlaces(openMeteo, photon, max = MAX_RESULTS) {
+  const ordered = [
+    ...openMeteo.filter((result) => result.major).map((result) => result.place),
+    ...photon,
+    ...openMeteo.filter((result) => !result.major).map((result) => result.place),
+  ];
+  const merged = [];
+  for (const place of ordered) {
+    if (merged.length === max) break;
+    if (!merged.some((other) => sameResult(other, place))) merged.push(place);
+  }
+  return merged;
+}
+
+/** BigDataCloud ters arama yanıtından konumun adı: ilçe varsa ilçe, yoksa şehir. Bulunamazsa null. */
+export function parseLocation(raw, lat, lon) {
+  const levels = Array.isArray(raw?.localityInfo?.administrative) ? raw.localityInfo.administrative : [];
+  const district = levels.find((level) => level?.adminLevel === 6)?.name;
+  const name = text(district) || text(raw?.city) || text(raw?.locality);
+  if (!name) return null;
+  const province = text(raw?.principalSubdivision);
+  return cleanPlace({ id: HERE_ID, name, region: province === name ? '' : province, country: raw?.countryName, lat, lon });
 }
 
 /** "Ege, Türkiye" gibi ikinci satır; boş alanlar atlanır. */

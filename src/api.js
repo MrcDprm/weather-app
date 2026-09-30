@@ -1,9 +1,12 @@
 // Open-Meteo istekleri. Anahtar gerekmez; yanıtlar weather.js ve places.js ile doğrulanır.
 import { parseForecast } from './weather.js';
-import { parsePlaces } from './places.js';
+import { parseLocation, parseOpenMeteo, parsePhoton } from './places.js';
 
 const FORECAST_URL = 'https://api.open-meteo.com/v1/forecast';
 const GEOCODING_URL = 'https://geocoding-api.open-meteo.com/v1/search';
+const PHOTON_URL = 'https://photon.komoot.io/api/';
+const REVERSE_URL = 'https://api.bigdatacloud.net/data/reverse-geocode-client';
+const TURKEY_BBOX = '25.6,35.8,44.9,42.2'; // batı, güney, doğu, kuzey
 const TIMEOUT_MS = 8000;
 
 const CURRENT = 'temperature_2m,apparent_temperature,relative_humidity_2m,wind_speed_10m,weather_code,is_day';
@@ -47,8 +50,21 @@ export async function fetchForecast(place) {
   return forecast;
 }
 
-/** Şehir arama; sonuçlar kullanıcının dilinde gelir. */
-export async function searchPlaces(query, lang) {
-  const params = new URLSearchParams({ name: query, count: '6', language: lang, format: 'json' });
-  return parsePlaces(await getJson(`${GEOCODING_URL}?${params}`));
+/** Dünya şehirleri (Open-Meteo / GeoNames): hızlı, adlar seçilen dilde. */
+export async function searchWorld(query, lang) {
+  const params = new URLSearchParams({ name: query, count: '10', language: lang, format: 'json' });
+  return parseOpenMeteo(await getJson(`${GEOCODING_URL}?${params}`), query);
+}
+
+/** Türkiye'deki il, ilçe ve mahalleler (Photon / OpenStreetMap): daha yavaş ama Türkçe yazımı iyi tanır. */
+export async function searchTurkey(query) {
+  const params = new URLSearchParams({ q: query, limit: '8', lang: 'default', bbox: TURKEY_BBOX });
+  for (const layer of ['city', 'district', 'county']) params.append('layer', layer);
+  return parsePhoton(await getJson(`${PHOTON_URL}?${params}`), query);
+}
+
+/** Konumun adı (ilçe, il, ülke). Koordinat sadece bu istekte kullanılır, saklanmaz. */
+export async function findLocationName(lat, lon, lang) {
+  const params = new URLSearchParams({ latitude: lat.toFixed(4), longitude: lon.toFixed(4), localityLanguage: lang });
+  return parseLocation(await getJson(`${REVERSE_URL}?${params}`), lat, lon);
 }
