@@ -8,12 +8,16 @@ import { setIcon } from './icons.js';
 import { translate } from './i18n.js';
 import { applyTheme, nextTheme } from './theme.js';
 import { initFeedback } from './feedback.js';
+import { pageMeta, pathFor, placeFromPath, slugForPlace } from './routes.js';
 
 const SEARCH_DELAY_MS = 300;
 const MIN_QUERY = 2;
 
 const browserLang = navigator.language?.toLowerCase().startsWith('tr') ? 'tr' : 'en';
 const settings = loadSettings(undefined, browserLang);
+// Adresteki ?lang=en / ?lang=tr kayıtlı tercihten önce gelir (paylaşılan ve Google'dan gelen linkler)
+const urlLang = new URLSearchParams(window.location.search).get('lang');
+if (urlLang === 'tr' || urlLang === 'en') settings.lang = urlLang;
 const t = (key, params) => translate(settings.lang, key, params);
 
 const $ = (id) => document.getElementById(id);
@@ -97,6 +101,22 @@ function textNode(tag, className, text) {
   node.className = className;
   node.textContent = text;
   return node;
+}
+
+// ---------- Adres ve sekme başlığı ----------
+/**
+ * Açık şehrin adresi (/istanbul) ve sekme başlığı güncellenir. replaceState geçmişe kayıt eklemez;
+ * geri tuşunun davranışı değişmez. Adresi olmayan yer (ör. bir mahalle) için ana adres kullanılır.
+ */
+function updateAddress() {
+  const slug = state.place && state.place.id !== HERE_ID ? slugForPlace(state.place) : null;
+  const query = settings.lang === 'en' ? '?lang=en' : '';
+  const target = `${pathFor(slug)}${query}`;
+  if (`${window.location.pathname}${window.location.search}` !== target) window.history.replaceState(null, '', target);
+
+  const meta = pageMeta(state.place ? placeName(state.place) : null, settings.lang);
+  document.title = meta.title;
+  document.querySelector('meta[name="description"]')?.setAttribute('content', meta.description);
 }
 
 // ---------- Ana sayfa ----------
@@ -233,6 +253,7 @@ async function openPlace(place) {
   state.place = place;
   state.forecast = null;
   showView('detail');
+  updateAddress();
   el.detail.hidden = true;
   el.retry.hidden = true;
   el.detailStatus.textContent = t('loading');
@@ -259,6 +280,7 @@ function goHome() {
   state.place = null;
   state.forecast = null;
   showView('home');
+  updateAddress();
   loadHome();
 }
 
@@ -381,6 +403,7 @@ function locate() {
         if (named && state.place === here) {
           state.place = named;
           renderDetail();
+          updateAddress();
         }
       } catch {
         // Ad bulunamazsa "Konumun" olarak kalır
@@ -397,7 +420,6 @@ function locate() {
 // ---------- Dil, birim, tema ----------
 function renderLanguage() {
   document.documentElement.lang = settings.lang;
-  document.title = t('pageTitle');
   for (const node of document.querySelectorAll('[data-i18n]')) node.textContent = t(node.dataset.i18n);
   for (const node of document.querySelectorAll('[data-i18n-aria]')) node.setAttribute('aria-label', t(node.dataset.i18nAria));
   for (const node of document.querySelectorAll('[data-i18n-placeholder]')) node.placeholder = t(node.dataset.i18nPlaceholder);
@@ -411,6 +433,7 @@ function renderUnits() {
 /** Dil ya da birim değişince her şey yeni ayarla yeniden yazılır (yeni istek atılmaz). */
 function renderAll() {
   renderLanguage();
+  updateAddress();
   renderUnits();
   renderHome();
   renderDetail();
@@ -458,4 +481,8 @@ applyTheme(settings.theme);
 renderLanguage();
 renderUnits();
 loadHome();
+// /istanbul, /londra gibi bir adresle gelindiyse o şehir açılır; bilinmeyen adres ana sayfaya döner
+const routePlace = placeFromPath(window.location.pathname);
+if (routePlace) openPlace(routePlace);
+else updateAddress();
 initFeedback(t);

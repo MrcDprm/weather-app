@@ -1,7 +1,6 @@
 // Arayüz metinleri (Türkçe / İngilizce). {name} yer tutucuları çağrılırken doldurulur.
 export const MESSAGES = {
   tr: {
-    pageTitle: 'Hava Durumu · Miraç Deprem',
     title: 'Hava Durumu',
     tagline: 'Şehir ara ya da konumunu kullan; anlık hava, 24 saat ve 5 günlük tahmin.',
     search: 'Şehir ara',
@@ -75,7 +74,6 @@ export const MESSAGES = {
     source: 'Kaynak kodu',
   },
   en: {
-    pageTitle: 'Weather App · Miraç Deprem',
     title: 'Weather',
     tagline: 'Search a city or use your location: current weather, the next 24 hours and a 5-day forecast.',
     search: 'Search for a city',
