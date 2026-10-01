@@ -2,7 +2,7 @@
 import { fetchCurrent, fetchForecast, findLocationName, searchTurkey, searchWorld } from './api.js';
 import { DEFAULT_CITIES, HERE_ID, localized, mergePlaces, placeDetail, samePlace, WORLD_CITIES } from './places.js';
 import { addRecent, loadSettings, MAX_SAVED, saveSettings, toggleSaved } from './storage.js';
-import { convertTemp, convertWind, describeWeather } from './weather.js';
+import { convertTemp, convertWind, describeWeather, localTime } from './weather.js';
 import { renderChart } from './chart.js';
 import { setIcon } from './icons.js';
 import { translate } from './i18n.js';
@@ -11,6 +11,7 @@ import { initFeedback } from './feedback.js';
 import { pageMeta, pathFor, placeFromPath, slugForPlace } from './routes.js';
 
 const SEARCH_DELAY_MS = 300;
+const CLOCK_MS = 15_000;
 const MIN_QUERY = 2;
 
 const browserLang = navigator.language?.toLowerCase().startsWith('tr') ? 'tr' : 'en';
@@ -199,6 +200,14 @@ function renderSaveButton() {
   el.saveLabel.textContent = isSaved ? t('saved') : t('save');
 }
 
+/** "Tekirdağ, Türkiye · Yerel saat 22:13". Saat ilerlesin diye CLOCK_MS'de bir yeniden yazılır. */
+function renderPlaceMeta() {
+  const { place, forecast } = state;
+  if (!place || !forecast) return;
+  const time = localTime(forecast);
+  el.placeMeta.textContent = [detailOf(place), time && t('updated', { time })].filter(Boolean).join(' · ');
+}
+
 function renderDetail() {
   const { place, forecast } = state;
   if (!place) return;
@@ -208,9 +217,7 @@ function renderDetail() {
 
   const { current, hours, days } = forecast;
   const look = describeWeather(current.code, current.isDay);
-  el.placeMeta.textContent = [detailOf(place), t('updated', { time: current.time.slice(11, 16) })]
-    .filter(Boolean)
-    .join(' · ');
+  renderPlaceMeta();
   setIcon(el.nowIcon, look.icon);
   el.nowTemp.textContent = formatTemp(current.temp);
   el.nowDesc.textContent = t(look.key);
@@ -486,3 +493,6 @@ const routePlace = placeFromPath(window.location.pathname);
 if (routePlace) openPlace(routePlace);
 else updateAddress();
 initFeedback(t);
+setInterval(() => {
+  if (!el.detailView.hidden) renderPlaceMeta();
+}, CLOCK_MS);

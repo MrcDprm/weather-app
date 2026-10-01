@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { convertTemp, convertWind, describeWeather, parseDays, parseForecast, parseHours } from '../src/weather.js';
+import { convertTemp, convertWind, describeWeather, localTime, parseDays, parseForecast, parseHours } from '../src/weather.js';
 
 const hourly = {
   time: ['2026-09-30T12:00', '2026-09-30T13:00', '2026-09-30T14:00', '2026-09-30T15:00', '2026-09-30T16:00'],
@@ -75,4 +75,32 @@ test('forecast: current values are validated, extras are ignored', () => {
   assert.deepEqual(forecast.current, { time: '2026-09-30T13:45', temp: 21.3, feels: null, humidity: 60, wind: 12, code: 2, isDay: false });
   assert.equal(forecast.hours.length, 4);
   assert.deepEqual(forecast.days, []);
+});
+
+test('forecast: time zone and UTC offset are validated', () => {
+  const current = { time: '2026-10-01T22:00', temperature_2m: 14 };
+  const good = parseForecast({ current, timezone: 'Europe/Istanbul', utc_offset_seconds: 10800 });
+  assert.equal(good.timeZone, 'Europe/Istanbul');
+  assert.equal(good.utcOffset, 10800);
+  const bad = parseForecast({ current, timezone: '<script>', utc_offset_seconds: 999999 });
+  assert.equal(bad.timeZone, null);
+  assert.equal(bad.utcOffset, null);
+});
+
+test('local time is the current time in the city, not the 15-minute data slot', () => {
+  const now = Date.UTC(2026, 9, 1, 19, 13, 40); // 22:13 in Istanbul (UTC+3)
+  assert.equal(localTime({ timeZone: 'Europe/Istanbul', utcOffset: 10800 }, now), '22:13');
+  assert.equal(localTime({ timeZone: 'Asia/Tokyo', utcOffset: 32400 }, now), '04:13');
+  assert.equal(localTime({ timeZone: 'Asia/Kolkata', utcOffset: 19800 }, now), '00:43');
+  // Saat dilimi tanınmazsa UTC farkı kullanılır
+  assert.equal(localTime({ timeZone: 'Mars/Olympus', utcOffset: 10800 }, now), '22:13');
+  assert.equal(localTime({ timeZone: null, utcOffset: -18000 }, now), '14:13');
+  assert.equal(localTime({ timeZone: null, utcOffset: null }, now), null);
+});
+
+test('local time follows daylight saving time', () => {
+  const summer = Date.UTC(2026, 6, 1, 12, 0); // Londra yazın UTC+1
+  const winter = Date.UTC(2026, 11, 1, 12, 0); // kışın UTC+0
+  assert.equal(localTime({ timeZone: 'Europe/London', utcOffset: 0 }, summer), '13:00');
+  assert.equal(localTime({ timeZone: 'Europe/London', utcOffset: 0 }, winter), '12:00');
 });

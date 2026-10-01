@@ -86,6 +86,37 @@ export function parseDays(daily, count = DAYS) {
     .filter((day) => typeof day.date === 'string' && day.max !== null && day.min !== null);
 }
 
+const TIME_ZONE = /^[A-Za-z][A-Za-z0-9_+\-/]{0,63}$/; // "Europe/Istanbul", "America/Argentina/Buenos_Aires"
+const MAX_OFFSET_SECONDS = 18 * 3600;
+
+function timeZoneOf(raw) {
+  return typeof raw?.timezone === 'string' && TIME_ZONE.test(raw.timezone) ? raw.timezone : null;
+}
+
+function utcOffsetOf(raw) {
+  const offset = num(raw?.utc_offset_seconds);
+  return offset !== null && Math.abs(offset) <= MAX_OFFSET_SECONDS ? offset : null;
+}
+
+/**
+ * Şehrin şu anki yerel saati ("22:13"). current.time saat değildir: Open-Meteo anlık veriyi 15 dakikalık
+ * aralıklarla verir ve current.time o aralığın başıdır (22:13'te "22:00"). Bu yüzden saat cihazın şimdiki
+ * zamanından, şehrin saat dilimine göre hesaplanır. Saat dilimi tanınmazsa yanıttaki UTC farkı kullanılır.
+ */
+export function localTime(forecast, now = Date.now()) {
+  if (forecast?.timeZone) {
+    try {
+      return new Intl.DateTimeFormat('en-GB', {
+        timeZone: forecast.timeZone, hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
+      }).format(now);
+    } catch {
+      // Tarayıcının bilmediği saat dilimi: aşağıdaki yedek
+    }
+  }
+  if (typeof forecast?.utcOffset !== 'number') return null;
+  return new Date(now + forecast.utcOffset * 1000).toISOString().slice(11, 16);
+}
+
 /** Tek bir konumun yanıtı. Anlık veri yoksa ya da bozuksa null döner. */
 export function parseForecast(raw) {
   const current = raw?.current;
@@ -103,5 +134,7 @@ export function parseForecast(raw) {
     },
     hours: parseHours(raw.hourly, current.time),
     days: parseDays(raw.daily),
+    timeZone: timeZoneOf(raw),
+    utcOffset: utcOffsetOf(raw),
   };
 }
