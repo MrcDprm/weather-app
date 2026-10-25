@@ -104,13 +104,6 @@ tests/                    Unit tests
 - **Time zones.** Forecast times come in the city's local time, and dates like "2026-10-01" can slip to the previous day if parsed as midnight. Reading them at noon UTC keeps the weekday right.
 - **Security headers for a static site.** The CSP allows connections only to the services I use, and location access is allowed only for this site. The local development server sends the same headers, so a blocked request shows up before it reaches the live site.
 
-## Future Plans
-
-- Sunrise and sunset, UV index and air quality.
-- Hourly details for the other days.
-- Weather alerts.
-- An installable app (PWA) that works offline with the last forecast.
-
 ## Credits
 
 - Weather data and world city search: [Open-Meteo](https://open-meteo.com) (CC BY 4.0), which uses [GeoNames](https://www.geonames.org) (CC BY 4.0).

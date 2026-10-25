@@ -104,13 +104,6 @@ tests/                    Birim testleri
 - **Saat dilimleri.** Tahmin saatleri şehrin yerel saatiyle geliyor. "2026-10-01" gibi bir tarih gece yarısı olarak okunursa bir önceki güne kayabiliyor. Öğlen UTC olarak okumak gün adını doğru tutuyor.
 - **Statik bir site için güvenlik başlıkları.** CSP sadece kullandığım servislere bağlantıya izin veriyor, konum izni de sadece bu siteye açık. Yerel geliştirme sunucusu da aynı başlıkları gönderiyor; engellenen bir istek canlı siteye çıkmadan fark ediliyor.
 
-## Gelecek Planları
-
-- Gün doğumu ve batımı, UV indeksi ve hava kalitesi.
-- Diğer günler için saatlik ayrıntı.
-- Hava uyarıları.
-- Son tahminle çevrim dışı da çalışan yüklenebilir uygulama (PWA).
-
 ## Kaynaklar
 
 - Hava verisi ve dünya şehirleri araması: [Open-Meteo](https://open-meteo.com) (CC BY 4.0); Open-Meteo [GeoNames](https://www.geonames.org) (CC BY 4.0) verisini kullanıyor.
