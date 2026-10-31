@@ -48,7 +48,7 @@ Sade HTML, CSS ve JavaScript ile yazılmış bir hava durumu uygulaması. Bir ş
 - [Open-Meteo](https://open-meteo.com): tahminler ve dünya şehirleri araması (GeoNames)
 - komoot'un [Photon](https://photon.komoot.io) servisi: Türkiye içi arama (OpenStreetMap)
 - [BigDataCloud](https://www.bigdatacloud.com/free-api/free-reverse-geocode-to-city-api): konumun adı
-- `node --test`: 44 birim testi
+- `node --test`: 58 birim testi
 - Sıkı bir Content Security Policy ile Vercel
 - **API anahtarı ve npm bağımlılığı yok**
 
@@ -98,7 +98,7 @@ tests/                    Birim testleri
 ## Öğrendiklerim
 
 - **Dışarıdan gelen veriye asla güvenmemek.** Her yanıt ekrana gelmeden önce kontrol ediliyor. Eksik bir sayı "—" oluyor, bozuk satır atlanıyor, bilinmeyen alanlar atılıyor. Yerel depodan geri okuduklarım da aynı kontrolden geçiyor, çünkü orası elle değiştirilebiliyor.
-- **İki kusurlu kaynağı birleştirmek.** Yer veritabanlarından biri Türkçe "ı"yı tanımıyor ve İstanbul'daki Kadıköy'ü bulamıyordu. Diğeri ise Türkçe yazılan "Londra"yı bulamıyordu. İkisini birlikte sorguluyorum. Türkçe harfleri sadeleştirerek "sanliurfa"yı "Şanlıurfa" ile eşleştiriyorum, bulanık eşleşmeleri eliyorum, başkentleri öne alıyorum ve aynı yeri ad ile mesafeye bakarak tekrar göstermiyorum.
+- **İki kusurlu kaynağı birleştirmek.** Yer veritabanlarından biri İstanbul'daki Kadıköy'ü aynı adlı daha küçük yerlerin arkasında listeliyor. Diğeri ise Türkçe yazılan "Londra"yı bulamıyor. İkisini birlikte sorguluyorum. Türkçe harfleri sadeleştirerek "sanliurfa"yı "Şanlıurfa" ile eşleştiriyorum, bulanık eşleşmeleri eliyorum, başkentleri öne alıyorum ve aynı yeri ad ile mesafeye bakarak tekrar göstermiyorum.
 - **Yavaş cevabın kazanmasına izin vermemek.** Arama son tuşa basıldıktan 300 ms sonra başlıyor. Her isteğin bir numarası var; geç gelen eski bir cevap yenisinin üstüne yazılamıyor. Hızlı kaynağın sonuçları yavaş olanı beklemeden gösteriliyor.
 - **Grafiği elle çizmek.** Grafik birkaç SVG çizgisi ve dikdörtgenden oluşuyor. Hesabı ayrı bir fonksiyona koyduğum için test edebildim: en sıcak saat en üstte, sıcaklıklar eşitse sıfıra bölme olmuyor, yağış verisi yoksa çubuk çizilmiyor.
 - **Saat dilimleri.** Tahmin saatleri şehrin yerel saatiyle geliyor. "2026-10-01" gibi bir tarih gece yarısı olarak okunursa bir önceki güne kayabiliyor. Öğlen UTC olarak okumak gün adını doğru tutuyor.
