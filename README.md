@@ -48,7 +48,7 @@ A weather app in plain HTML, CSS and JavaScript. Search any city or district, or
 - [Open-Meteo](https://open-meteo.com): forecasts and world city search (GeoNames)
 - [Photon](https://photon.komoot.io) by komoot: search in Türkiye (OpenStreetMap)
 - [BigDataCloud](https://www.bigdatacloud.com/free-api/free-reverse-geocode-to-city-api): the name of your location
-- `node --test`: 44 unit tests
+- `node --test`: 58 unit tests
 - Vercel, with a strict Content Security Policy
 - **No API keys and no npm dependencies**
 
@@ -98,7 +98,7 @@ tests/                    Unit tests
 ## What I Learned
 
 - **Never trusting data from outside.** Every response is checked before it reaches the screen. A missing number becomes "—", a broken row is skipped, and unknown fields are dropped. The same checks run on what I read back from local storage, because it can be edited by hand.
-- **Combining two imperfect sources.** One place database could not handle the Turkish "ı" and missed Kadıköy in İstanbul, while the other could not find "London" when typed in Turkish. I query both at once. I fold Turkish letters so "sanliurfa" matches "Şanlıurfa", drop fuzzy matches, rank capitals first and remove duplicates by name and distance.
+- **Combining two imperfect sources.** One place database lists Kadıköy in İstanbul behind smaller places with the same name, while the other cannot find "London" when typed in Turkish. I query both at once. I fold Turkish letters so "sanliurfa" matches "Şanlıurfa", drop fuzzy matches, rank capitals first and remove duplicates by name and distance.
 - **Not letting slow answers win.** Search waits 300 ms after the last key press. Each request carries a number, so an old answer that arrives late cannot overwrite a newer one. The fast source is shown right away instead of waiting for the slow one.
 - **Drawing a chart by hand.** The chart is a few SVG lines and rectangles. The maths is in a separate function, so I could test it: the warmest hour sits at the top, equal temperatures do not divide by zero, and missing rain draws no bar.
 - **Time zones.** Forecast times come in the city's local time, and dates like "2026-10-01" can slip to the previous day if parsed as midnight. Reading them at noon UTC keeps the weekday right.
