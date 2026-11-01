@@ -784,7 +784,7 @@ h1 {
 }
 .day {
   display: grid;
-  grid-template-columns: 5.25rem 1.75rem minmax(0, 1fr) auto;
+  grid-template-columns: 6.25rem 1.75rem minmax(0, 1fr) auto;
   gap: 0.375rem;
   align-items: center;
   padding: 0.375rem 0;
@@ -795,7 +795,6 @@ h1 {
 }
 .day-name {
   font-weight: 700;
-  overflow-wrap: anywhere;
 }
 .day-icon {
   width: 1.625rem;
