@@ -1,6 +1,6 @@
 // Tema: sayfaya uygulama ve açık/koyu arasında geçiş.
 // İlk boyamadan önceki uygulama theme-init.js'te; bu modül sayfa açıldıktan sonrasını yönetir.
-const THEME_COLORS = { dark: '#0b0f15', light: '#dee4ec' };
+const THEME_COLORS = { dark: '#10293a', light: '#e6f0ec' };
 
 /** Temayı <html data-theme="..."> ile uygular; tarayıcı çubuğunun rengini de (mobil) eşler. */
 export function applyTheme(theme) {
