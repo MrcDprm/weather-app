@@ -1,6 +1,6 @@
 // Arayüz: ekranlar, arama, konum, birimler. Veri api.js'ten gelir; bütün metinler textContent ile yazılır.
 import { fetchCurrent, fetchForecast, findLocationName, searchTurkey, searchWorld } from './api.js';
-import { HERE_ID, localized, mergePlaces, placeDetail, samePlace, WORLD_CITIES } from './places.js';
+import { HERE_ID, localized, mergePlaces, placeDetail, placeFromLocation, samePlace, WORLD_CITIES } from './places.js';
 import { addRecent, loadSettings, MAX_SAVED, saveSettings, toggleSaved } from './storage.js';
 import { convertTemp, convertWind, describeWeather, localTime } from './weather.js';
 import { renderChart } from './chart.js';
@@ -272,7 +272,7 @@ function renderCenterLetter() {
 
 function renderSaveButton() {
   const place = state.place;
-  el.save.hidden = !place || place.id === HERE_ID; // konum kaydedilmez
+  el.save.hidden = !place;
   const isSaved = Boolean(place) && settings.saved.some((item) => samePlace(item, place));
   el.save.setAttribute('aria-pressed', String(isSaved));
   el.saveLabel.textContent = isSaved ? t('saved') : t('save');
@@ -493,7 +493,7 @@ function locate() {
     async (position) => {
       el.locate.disabled = false;
       const { latitude, longitude } = position.coords;
-      // Konum sadece bu isteklerde kullanılır, hiçbir yere kaydedilmez.
+      // Konum bu isteklerde kullanılır; kullanıcı Kaydet demedikçe saklanmaz (bkz. placeFromLocation).
       // Hava durumu ve yer adı aynı anda istenir; ad gelene kadar "Konumun" yazar.
       const here = { id: HERE_ID, name: '', region: '', country: '', lat: latitude, lon: longitude };
       openPlace(here);
@@ -571,7 +571,8 @@ el.themeToggle.addEventListener('click', () => {
 el.save.addEventListener('click', () => {
   const wasFull = settings.saved.length >= MAX_SAVED;
   const before = settings.saved.length;
-  settings.saved = toggleSaved(settings.saved, state.place);
+  const place = state.place.id === HERE_ID ? placeFromLocation(state.place, t('myLocation')) : state.place;
+  settings.saved = toggleSaved(settings.saved, place);
   saveSettings(settings);
   // Liste doluyken ekleme yapıldıysa en eski kayıt düştü; kullanıcıya söylenir
   el.detailStatus.textContent = wasFull && settings.saved.length === before ? t('savedFull', { max: MAX_SAVED }) : '';
