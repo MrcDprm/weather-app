@@ -11,14 +11,14 @@ const city = (id, lat = 1, lon = 1) => ({ id, name: `City ${id}`, region: '', co
 
 test('defaults when nothing is stored', () => {
   assert.deepEqual(loadSettings(fakeStorage(), 'en'), {
-    lang: 'en', theme: 'dark', units: 'metric', saved: [], recent: [],
+    lang: 'en', theme: 'light', units: 'metric', saved: [], recent: [],
   });
 });
 
 test('broken JSON and unknown values fall back to defaults', () => {
   assert.equal(loadSettings(fakeStorage('{not json')).units, 'metric');
   const settings = loadSettings(fakeStorage(JSON.stringify({ lang: 'de', theme: 'pink', units: 'kelvin', saved: 'x' })));
-  assert.deepEqual(settings, { lang: 'tr', theme: 'dark', units: 'metric', saved: [], recent: [] });
+  assert.deepEqual(settings, { lang: 'tr', theme: 'light', units: 'metric', saved: [], recent: [] });
 });
 
 test('stored cities are validated and cleaned', () => {

@@ -33,7 +33,7 @@ export function loadSettings(storage = browserStorage(), fallbackLang = 'tr') {
   const saved = storage ? readJson(storage) : {};
   return {
     lang: oneOf(saved.lang, LANGUAGES, fallbackLang),
-    theme: oneOf(saved.theme, THEMES, 'dark'),
+    theme: oneOf(saved.theme, THEMES, 'light'),
     units: oneOf(saved.units, UNITS, 'metric'),
     saved: placeList(saved.saved, MAX_SAVED),
     recent: placeList(saved.recent, MAX_RECENT),

@@ -1,8 +1,8 @@
-// Sayfa çizilmeden önce kayıtlı temayı uygular (açık temada koyu ekranın bir an yanıp sönmemesi için).
+// Sayfa çizilmeden önce kayıtlı temayı uygular (gece haritası seçiliyken gündüz haritasının bir an yanıp sönmemesi için).
 try {
-  if (JSON.parse(localStorage.getItem('weather-settings'))?.theme === 'light') {
-    document.documentElement.dataset.theme = 'light';
+  if (JSON.parse(localStorage.getItem('weather-settings'))?.theme === 'dark') {
+    document.documentElement.dataset.theme = 'dark';
   }
 } catch {
-  // Depolama kapalıysa varsayılan koyu tema kalır
+  // Depolama kapalıysa varsayılan gündüz haritası kalır
 }

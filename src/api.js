@@ -9,7 +9,7 @@ const REVERSE_URL = 'https://api.bigdatacloud.net/data/reverse-geocode-client';
 const TURKEY_BBOX = '25.6,35.8,44.9,42.2'; // batı, güney, doğu, kuzey
 const TIMEOUT_MS = 8000;
 
-const CURRENT = 'temperature_2m,apparent_temperature,relative_humidity_2m,wind_speed_10m,weather_code,is_day';
+const CURRENT = 'temperature_2m,apparent_temperature,relative_humidity_2m,wind_speed_10m,wind_direction_10m,pressure_msl,weather_code,is_day';
 const HOURLY = 'temperature_2m,precipitation_probability,weather_code';
 const DAILY = 'weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max';
 
@@ -63,7 +63,7 @@ export async function searchTurkey(query) {
   return parsePhoton(await getJson(`${PHOTON_URL}?${params}`), query);
 }
 
-/** Konumun adı (ilçe, il, ülke). Koordinat sadece bu istekte kullanılır, saklanmaz. */
+/** Konumun adı (ilçe, il, ülke). Koordinat sadece bu istekte kullanılır. */
 export async function findLocationName(lat, lon, lang) {
   const params = new URLSearchParams({ latitude: lat.toFixed(4), longitude: lon.toFixed(4), localityLanguage: lang });
   return parseLocation(await getJson(`${REVERSE_URL}?${params}`), lat, lon);

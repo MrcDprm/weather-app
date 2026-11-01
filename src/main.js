@@ -1,9 +1,11 @@
 // Arayüz: ekranlar, arama, konum, birimler. Veri api.js'ten gelir; bütün metinler textContent ile yazılır.
 import { fetchCurrent, fetchForecast, findLocationName, searchTurkey, searchWorld } from './api.js';
-import { DEFAULT_CITIES, HERE_ID, localized, mergePlaces, placeDetail, samePlace, WORLD_CITIES } from './places.js';
+import { HERE_ID, localized, mergePlaces, placeDetail, placeFromLocation, samePlace, WORLD_CITIES } from './places.js';
 import { addRecent, loadSettings, MAX_SAVED, saveSettings, toggleSaved } from './storage.js';
 import { convertTemp, convertWind, describeWeather, localTime } from './weather.js';
 import { renderChart } from './chart.js';
+import { MAP_CITIES, MAP_HEIGHT, MAP_WIDTH, mapPosition, TURKEY_PATH } from './map.js';
+import { barbPaths, compassPoint, coverPath, pressureCenter, skyQuarters, windFeathers } from './station.js';
 import { setIcon } from './icons.js';
 import { translate } from './i18n.js';
 import { applyTheme, nextTheme } from './theme.js';
@@ -13,6 +15,8 @@ import { pageMeta, pathFor, placeFromPath, slugForPlace } from './routes.js';
 const SEARCH_DELAY_MS = 300;
 const CLOCK_MS = 15_000;
 const MIN_QUERY = 2;
+const SVG_NS = 'http://www.w3.org/2000/svg';
+const SKY_RADIUS = 8;
 
 const browserLang = navigator.language?.toLowerCase().startsWith('tr') ? 'tr' : 'en';
 const settings = loadSettings(undefined, browserLang);
@@ -35,6 +39,9 @@ const el = {
   savedGroup: $('saved-group'),
   savedGrid: $('saved-grid'),
   cityGrid: $('city-grid'),
+  mapLand: $('map-land'),
+  mapStations: $('map-stations'),
+  centerLetter: $('center-letter'),
   worldGrid: $('world-grid'),
   recentGroup: $('recent-group'),
   recentList: $('recent-list'),
@@ -48,6 +55,8 @@ const el = {
   placeName: $('place-name'),
   placeMeta: $('place-meta'),
   nowIcon: $('now-icon'),
+  nowMark: $('now-mark'),
+  nowPressure: $('now-pressure'),
   nowTemp: $('now-temp'),
   nowDesc: $('now-desc'),
   nowFeels: $('now-feels'),
@@ -77,6 +86,7 @@ const formatWind = (kmh) => {
   const unit = imperial() ? 'mph' : 'kmh';
   return `${convertWind(kmh, unit)} ${t(`unit_${unit}`)}`;
 };
+const conditionOf = (look) => look.key.replace('condition_', '');
 const formatPercent = (value) => (settings.lang === 'tr' ? `%${value}` : `${value}%`); // Türkçede yüzde işareti önde
 
 function formatDay(date, index) {
@@ -90,7 +100,7 @@ const placeName = (place) => (place.id === HERE_ID && !place.name ? t('myLocatio
 const detailOf = (place) => placeDetail(place, settings.lang);
 
 function iconSvg(name, className) {
-  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  const svg = document.createElementNS(SVG_NS, 'svg');
   svg.setAttribute('class', `wx-icon ${className}`);
   svg.setAttribute('aria-hidden', 'true');
   setIcon(svg, name);
@@ -120,29 +130,88 @@ function updateAddress() {
   document.querySelector('meta[name="description"]')?.setAttribute('content', meta.description);
 }
 
+// ---------- İstasyon işareti ----------
+function svgNode(name, attributes) {
+  const node = document.createElementNS(SVG_NS, name);
+  for (const [key, value] of Object.entries(attributes)) node.setAttribute(key, value);
+  return node;
+}
+
+/** Daire bulutluluğa göre dolar; tüy rüzgârın geldiği yönü ve gücünü gösterir. Veri yoksa boş daire kalır. */
+function drawMark(svg, weather) {
+  svg.setAttribute('viewBox', '-40 -40 80 80');
+  const look = weather ? describeWeather(weather.code, weather.isDay) : null;
+  const feathers = weather ? windFeathers(weather.wind) : null;
+  const cover = look ? coverPath(skyQuarters(conditionOf(look)), SKY_RADIUS) : '';
+  const children = [];
+
+  if (feathers && !feathers.calm && weather.windFrom !== null) {
+    const barb = svgNode('g', { transform: `rotate(${weather.windFrom})` });
+    const { staff, flags } = barbPaths(feathers, { radius: SKY_RADIUS, length: 26 });
+    barb.append(svgNode('path', { class: 'staff', d: staff }));
+    if (flags) barb.append(svgNode('path', { class: 'flag', d: flags }));
+    children.push(barb);
+  }
+  if (feathers?.calm) children.push(svgNode('circle', { class: 'calm-ring', r: SKY_RADIUS + 4 })); // sakin hava: çift daire
+  children.push(svgNode('circle', { class: 'sky', r: SKY_RADIUS }));
+  if (cover) children.push(svgNode('path', { class: 'cover', d: cover }));
+  svg.replaceChildren(...children);
+}
+
+function markSvg(weather) {
+  const svg = svgNode('svg', { class: 'mark', 'aria-hidden': 'true' });
+  drawMark(svg, weather);
+  return svg;
+}
+
+/** Ekran okuyucu ve fare için tam açıklama: "İstanbul: 16°, parçalı bulutlu, rüzgâr 14 km/sa, kuzeydoğudan". */
+function stationLabel(place, weather) {
+  const name = placeName(place);
+  if (!weather) return name;
+  const look = describeWeather(weather.code, weather.isDay);
+  const parts = [t('stationLabel', { name, temp: formatTemp(weather.temp), sky: t(look.key) })];
+  const point = compassPoint(weather.windFrom);
+  if (weather.wind !== null && point) parts.push(t('stationWind', { wind: formatWind(weather.wind), from: t(`from_${point}`) }));
+  return parts.join(', ');
+}
+
 // ---------- Ana sayfa ----------
-function cityCard(place) {
+/** Haritadaki istasyon: işaret gerçek koordinatta, etiket kıyı çizgisine binmeyecek yanda. */
+function mapStation({ place, side }) {
+  const weather = state.homeWeather.get(place.id);
+  const { x, y } = mapPosition(place.lat, place.lon);
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = 'map-station';
+  button.dataset.side = side;
+  button.style.setProperty('--x', x);
+  button.style.setProperty('--y', y);
+  button.setAttribute('aria-label', stationLabel(place, weather));
+  button.title = stationLabel(place, weather);
+  button.addEventListener('click', () => openPlace(place));
+
+  const label = document.createElement('span');
+  label.className = 'map-label';
+  label.append(textNode('b', '', weather ? formatTemp(weather.temp) : '—'), textNode('span', '', placeName(place)));
+  button.append(markSvg(weather), label);
+
+  const item = document.createElement('li');
+  item.append(button);
+  return item;
+}
+
+/** Liste hâlindeki istasyon: başkentler, kayıtlı şehirler ve dar ekranda Türkiye. */
+function stationItem(place) {
   const weather = state.homeWeather.get(place.id);
   const button = document.createElement('button');
   button.type = 'button';
-  button.className = 'city-card';
+  button.className = 'station';
+  button.setAttribute('aria-label', stationLabel(place, weather));
   button.addEventListener('click', () => openPlace(place));
 
-  const head = document.createElement('span');
-  head.className = 'city-head';
-  head.append(textNode('span', 'city-name', placeName(place)), textNode('span', 'city-detail', detailOf(place)));
-
-  if (weather) {
-    const look = describeWeather(weather.code, weather.isDay);
-    button.append(
-      head,
-      iconSvg(look.icon, 'city-icon'),
-      textNode('span', 'city-temp', formatTemp(weather.temp)),
-      textNode('span', 'city-desc', [t(look.key), weather.wind === null ? '' : formatWind(weather.wind)].filter(Boolean).join(' · ')),
-    );
-  } else {
-    button.append(head, textNode('span', 'city-temp muted', '—'));
-  }
+  const name = textNode('span', 'station-name', placeName(place));
+  name.append(textNode('small', '', detailOf(place)));
+  button.append(markSvg(weather), textNode('span', 'station-temp', weather ? formatTemp(weather.temp) : '—'), name);
 
   const item = document.createElement('li');
   item.append(button);
@@ -151,9 +220,10 @@ function cityCard(place) {
 
 function renderHome() {
   el.savedGroup.hidden = settings.saved.length === 0;
-  el.savedGrid.replaceChildren(...settings.saved.map(cityCard));
-  el.cityGrid.replaceChildren(...DEFAULT_CITIES.map(cityCard));
-  el.worldGrid.replaceChildren(...WORLD_CITIES.map(cityCard));
+  el.savedGrid.replaceChildren(...settings.saved.map(stationItem));
+  el.mapStations.replaceChildren(...MAP_CITIES.map(mapStation));
+  el.cityGrid.replaceChildren(...MAP_CITIES.map(({ place }) => stationItem(place)));
+  el.worldGrid.replaceChildren(...WORLD_CITIES.map(stationItem));
 
   el.recentGroup.hidden = settings.recent.length === 0;
   el.recentList.replaceChildren(
@@ -173,7 +243,7 @@ function renderHome() {
 
 /** Ana sayfadaki bütün şehirlerin (büyük şehirler, başkentler, kayıtlılar) anlık havası tek istekte gelir. */
 async function loadHome() {
-  const places = [...DEFAULT_CITIES, ...WORLD_CITIES, ...settings.saved];
+  const places = [...MAP_CITIES.map(({ place }) => place), ...WORLD_CITIES, ...settings.saved];
   renderHome();
   try {
     const results = await fetchCurrent(places);
@@ -190,11 +260,19 @@ async function loadHome() {
 function showView(name) {
   el.homeView.hidden = name !== 'home';
   el.detailView.hidden = name !== 'detail';
+  renderCenterLetter();
+}
+
+/** Haritadaki A/Y yalnızca şehir sayfasında ve o şehrin gerçek basıncından gelir; ana sayfada harf yok. */
+function renderCenterLetter() {
+  const center = !el.detailView.hidden ? pressureCenter(state.forecast?.current.pressure ?? null) : null;
+  el.centerLetter.textContent = center ? t(`centerLetter_${center}`) : '';
+  el.centerLetter.setAttribute('class', center ? `center-letter ${center}` : 'center-letter');
 }
 
 function renderSaveButton() {
   const place = state.place;
-  el.save.hidden = !place || place.id === HERE_ID; // konum kaydedilmez
+  el.save.hidden = !place;
   const isSaved = Boolean(place) && settings.saved.some((item) => samePlace(item, place));
   el.save.setAttribute('aria-pressed', String(isSaved));
   el.saveLabel.textContent = isSaved ? t('saved') : t('save');
@@ -223,7 +301,15 @@ function renderDetail() {
   el.nowDesc.textContent = t(look.key);
   el.nowFeels.textContent = current.feels === null ? '—' : formatTemp(current.feels);
   el.nowHumidity.textContent = current.humidity === null ? '—' : formatPercent(current.humidity);
-  el.nowWind.textContent = current.wind === null ? '—' : formatWind(current.wind);
+  const point = compassPoint(current.windFrom);
+  el.nowWind.textContent = current.wind === null ? '—' : [formatWind(current.wind), point && t(`dir_${point}`)].filter(Boolean).join(' ');
+  const center = pressureCenter(current.pressure);
+  el.nowPressure.textContent = center
+    ? t('pressureValue', { value: Math.round(current.pressure), center: t(`pressure_${center}`) })
+    : '—';
+  drawMark(el.nowMark, current);
+  el.nowMark.setAttribute('viewBox', '-48 -48 96 96');
+  renderCenterLetter();
 
   renderChart(el.chart, hours, formatTemp);
   if (hours.length > 0) {
@@ -240,14 +326,20 @@ function renderDetail() {
       const dayLook = describeWeather(day.code);
       const item = document.createElement('li');
       item.className = 'day';
-      const rain = textNode('span', 'day-rain', day.rain === null ? '' : `💧 ${formatPercent(day.rain)}`);
+      item.title = t(dayLook.key);
+      const icon = iconSvg(dayLook.icon, 'day-icon');
+      icon.removeAttribute('aria-hidden');
+      icon.setAttribute('role', 'img');
+      const rain = textNode('span', 'day-rain', day.rain === null ? '' : formatPercent(day.rain));
       if (day.rain !== null) rain.title = t('rainChance', { value: day.rain });
+      icon.setAttribute('aria-label', t(dayLook.key));
+      const temps = textNode('span', 'day-temps', ` ${formatTemp(day.min)}`);
+      temps.prepend(textNode('b', '', formatTemp(day.max)));
       item.append(
         textNode('span', 'day-name', formatDay(day.date, index)),
-        iconSvg(dayLook.icon, 'day-icon'),
-        textNode('span', 'day-desc', t(dayLook.key)),
+        icon,
         rain,
-        textNode('span', 'day-temps', `${formatTemp(day.max)} / ${formatTemp(day.min)}`),
+        temps,
       );
       return item;
     }),
@@ -401,7 +493,7 @@ function locate() {
     async (position) => {
       el.locate.disabled = false;
       const { latitude, longitude } = position.coords;
-      // Konum sadece bu isteklerde kullanılır, hiçbir yere kaydedilmez.
+      // Konum bu isteklerde kullanılır; kullanıcı Kaydet demedikçe saklanmaz (bkz. placeFromLocation).
       // Hava durumu ve yer adı aynı anda istenir; ad gelene kadar "Konumun" yazar.
       const here = { id: HERE_ID, name: '', region: '', country: '', lat: latitude, lon: longitude };
       openPlace(here);
@@ -425,12 +517,17 @@ function locate() {
 }
 
 // ---------- Dil, birim, tema ----------
+function renderThemeButton() {
+  el.themeToggle.textContent = t(settings.theme === 'dark' ? 'themeDay' : 'themeNight');
+}
+
 function renderLanguage() {
   document.documentElement.lang = settings.lang;
   for (const node of document.querySelectorAll('[data-i18n]')) node.textContent = t(node.dataset.i18n);
   for (const node of document.querySelectorAll('[data-i18n-aria]')) node.setAttribute('aria-label', t(node.dataset.i18nAria));
   for (const node of document.querySelectorAll('[data-i18n-placeholder]')) node.placeholder = t(node.dataset.i18nPlaceholder);
   for (const button of el.langButtons) button.setAttribute('aria-pressed', String(button.dataset.lang === settings.lang));
+  renderThemeButton();
 }
 
 function renderUnits() {
@@ -468,12 +565,14 @@ el.themeToggle.addEventListener('click', () => {
   settings.theme = nextTheme(settings.theme);
   saveSettings(settings);
   applyTheme(settings.theme);
+  renderThemeButton();
 });
 
 el.save.addEventListener('click', () => {
   const wasFull = settings.saved.length >= MAX_SAVED;
   const before = settings.saved.length;
-  settings.saved = toggleSaved(settings.saved, state.place);
+  const place = state.place.id === HERE_ID ? placeFromLocation(state.place, t('myLocation')) : state.place;
+  settings.saved = toggleSaved(settings.saved, place);
   saveSettings(settings);
   // Liste doluyken ekleme yapıldıysa en eski kayıt düştü; kullanıcıya söylenir
   el.detailStatus.textContent = wasFull && settings.saved.length === before ? t('savedFull', { max: MAX_SAVED }) : '';
@@ -484,6 +583,9 @@ el.back.addEventListener('click', goHome);
 el.retry.addEventListener('click', () => openPlace(state.place));
 el.locate.addEventListener('click', locate);
 
+document.getElementById('footer-year').textContent = new Date().getFullYear();
+el.mapLand.setAttribute('viewBox', `0 0 ${MAP_WIDTH} ${MAP_HEIGHT}`);
+el.mapLand.append(svgNode('path', { d: TURKEY_PATH }));
 applyTheme(settings.theme);
 renderLanguage();
 renderUnits();
