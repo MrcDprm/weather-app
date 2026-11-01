@@ -2,7 +2,6 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   cleanPlace,
-  DEFAULT_CITIES,
   foldText,
   HERE_ID,
   isPlace,
@@ -12,24 +11,21 @@ import {
   parseOpenMeteo,
   parsePhoton,
   placeDetail,
+  placeFromLocation,
   samePlace,
   WORLD_CITIES,
 } from '../src/places.js';
+import { placeForSlug } from '../src/routes.js';
+import { toggleSaved } from '../src/storage.js';
 
 const openMeteo = (results) => ({ results });
 const photon = (features) => ({ type: 'FeatureCollection', features });
 const feature = (properties, lon, lat) => ({ type: 'Feature', geometry: { type: 'Point', coordinates: [lon, lat] }, properties });
 
-test('the four default cities are valid places', () => {
-  assert.deepEqual(DEFAULT_CITIES.map((city) => city.name), ['İstanbul', 'Ankara', 'İzmir', 'Bursa']);
-  assert.ok(DEFAULT_CITIES.every(isPlace));
-});
-
 test('world capitals are valid, unique places', () => {
   assert.equal(WORLD_CITIES.length, 8);
   assert.ok(WORLD_CITIES.every(isPlace));
-  const all = [...DEFAULT_CITIES, ...WORLD_CITIES];
-  assert.equal(new Set(all.map((city) => city.id)).size, all.length);
+  assert.equal(new Set(WORLD_CITIES.map((city) => city.id)).size, WORLD_CITIES.length);
 });
 
 test('names and details follow the language', () => {
@@ -39,7 +35,7 @@ test('names and details follow the language', () => {
   assert.equal(placeDetail(london, 'en'), 'United Kingdom');
   const paris = WORLD_CITIES.find((city) => city.id === 'paris');
   assert.equal(localized(paris, 'name', 'en'), 'Paris'); // karşılığı yoksa aynı ad
-  assert.equal(placeDetail(DEFAULT_CITIES[1], 'en'), 'Central Anatolia, Türkiye');
+  assert.equal(placeDetail(placeForSlug('ankara'), 'en'), 'Central Anatolia, Türkiye');
 });
 
 test('English names survive saving; unknown fields do not', () => {
@@ -154,7 +150,56 @@ test('long names are cut to 100 characters', () => {
 });
 
 test('same place by id or by nearly the same coordinates', () => {
-  const bursa = DEFAULT_CITIES[3];
-  assert.ok(samePlace(bursa, { id: 'other', lat: 40.19559, lon: 29.06013 }));
-  assert.ok(!samePlace(bursa, DEFAULT_CITIES[0]));
+  const bursa = placeForSlug('bursa');
+  assert.ok(samePlace(bursa, { id: 'other', lat: bursa.lat + 0.005, lon: bursa.lon - 0.005 }));
+  assert.ok(!samePlace(bursa, placeForSlug('istanbul')));
+});
+
+test('search: a district seat is not pushed out by villages with the same name', () => {
+  const seat = { id: 7, name: 'Kapaklı', latitude: 41.33, longitude: 27.97, feature_code: 'PPLA2', country: 'Türkiye', admin1: 'Tekirdağ' };
+  const hamlet = { id: 8, name: 'Kapaklı', latitude: 36.2, longitude: 29.9, feature_code: 'PPL', country: 'Türkiye', admin1: 'Antalya', population: 520 };
+  const parsed = parseOpenMeteo(openMeteo([seat, hamlet]), 'kapaklı');
+  assert.deepEqual(parsed.map((result) => result.major), [true, false]);
+
+  // Photon aynı adlı köylerle listeyi doldurur; ilçe merkezi yine de ilk sırada kalmalı
+  const villages = Array.from({ length: 8 }, (_, index) => ({ id: `osm-N${index}`, name: 'Kapaklı', region: 'X', country: 'Türkiye', lat: 37 + index, lon: 30 + index }));
+  const merged = mergePlaces(parsed, villages);
+  assert.equal(merged.length, 6);
+  assert.equal(merged[0].region, 'Tekirdağ');
+});
+
+test('saving my location: rounded to about 1 km, with its own id and a usable name', () => {
+  const here = { id: HERE_ID, name: 'Kapaklı', region: 'Tekirdağ', country: 'Türkiye', lat: 41.33217, lon: 27.97684 };
+  const saved = placeFromLocation(here, 'Konumun');
+  assert.equal(saved.lat, 41.33);
+  assert.equal(saved.lon, 27.98);
+  assert.equal(saved.id, 'loc-41.33_27.98');
+  assert.equal(saved.name, 'Kapaklı');
+  assert.ok(isPlace(saved));
+  assert.equal(placeFromLocation({ ...here, name: '' }, 'Konumun').name, 'Konumun'); // ad bulunamadıysa
+  assert.ok(samePlace(saved, here), 'the save button must recognise the open location as saved');
+});
+
+test('saving my location: two different locations stay separate, the same one toggles off', () => {
+  const first = placeFromLocation({ id: HERE_ID, name: 'A', lat: 41.33, lon: 27.97 }, 'x');
+  const second = placeFromLocation({ id: HERE_ID, name: 'B', lat: 39.9, lon: 32.8 }, 'x');
+  let list = toggleSaved([], first);
+  list = toggleSaved(list, second);
+  assert.equal(list.length, 2);
+  assert.equal(toggleSaved(list, first).length, 1);
+});
+
+test('saving my location: negative coordinates still give a valid place', () => {
+  const place = placeFromLocation({ id: HERE_ID, name: 'Lima', lat: -12.0464, lon: -77.0428 }, 'x');
+  assert.ok(isPlace(place));
+  assert.equal(place.id, 'loc--12.05_-77.04');
+});
+
+test('Open-Meteo: Turkey keeps one name, other countries keep theirs', () => {
+  const [turkey, germany] = parseOpenMeteo(openMeteo([
+    { id: 1, name: 'Bornova', latitude: 38.4, longitude: 27.2, feature_code: 'PPLA2', country: 'Türkiye Cumhuriyeti', country_code: 'TR', admin1: 'İzmir' },
+    { id: 2, name: 'Bonn', latitude: 50.7, longitude: 7.1, feature_code: 'PPL', country: 'Almanya', country_code: 'DE', admin1: 'NRW' },
+  ]), 'bo');
+  assert.equal(turkey.place.country, 'Türkiye');
+  assert.equal(germany.place.country, 'Almanya');
 });

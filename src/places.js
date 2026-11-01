@@ -2,16 +2,11 @@
 const MAX_TEXT = 100;
 const MAX_RESULTS = 6;
 const MAJOR_POPULATION = 1_000_000;
+// GeoNames kodları: başkent, il merkezi, ilçe merkezi. Aynı adlı köylerin arkasında kalmasınlar diye öne alınır
+const SEAT_CODES = ['PPLC', 'PPLA', 'PPLA2'];
 export const HERE_ID = 'here'; // "Konumumu kullan" ile açılan yer
 
 // Sabit şehirlerin İngilizce adları ...En alanlarında; aramadan gelen şehirler zaten seçilen dilde gelir
-export const DEFAULT_CITIES = [
-  { id: 'istanbul', name: 'İstanbul', region: 'Marmara', country: 'Türkiye', lat: 41.0082, lon: 28.9784 },
-  { id: 'ankara', name: 'Ankara', region: 'İç Anadolu', regionEn: 'Central Anatolia', country: 'Türkiye', lat: 39.9334, lon: 32.8597 },
-  { id: 'izmir', name: 'İzmir', region: 'Ege', regionEn: 'Aegean', country: 'Türkiye', lat: 38.4237, lon: 27.1428 },
-  { id: 'bursa', name: 'Bursa', region: 'Marmara', country: 'Türkiye', lat: 40.1885, lon: 29.061 },
-];
-
 export const WORLD_CITIES = [
   { id: 'london', name: 'Londra', nameEn: 'London', country: 'Birleşik Krallık', countryEn: 'United Kingdom', lat: 51.5074, lon: -0.1278 },
   { id: 'paris', name: 'Paris', country: 'Fransa', countryEn: 'France', lat: 48.8566, lon: 2.3522 },
@@ -81,12 +76,13 @@ export function parseOpenMeteo(raw, query) {
         id: String(result.id ?? ''),
         name: result.name,
         region: result.admin1,
-        country: result.country,
+        // GeoNames Türkçede "Türkiye Cumhuriyeti" yazıyor; uygulamanın geri kalanı "Türkiye" der
+        country: result.country_code === 'TR' ? 'Türkiye' : result.country,
         lat: result.latitude,
         lon: result.longitude,
       },
-      // Başkentler ve büyük şehirler listenin başına alınır
-      major: result.feature_code === 'PPLC' || (Number.isFinite(result.population) && result.population >= MAJOR_POPULATION),
+      // Başkentler, il ve ilçe merkezleri ile büyük şehirler listenin başına alınır
+      major: SEAT_CODES.includes(result.feature_code) || (Number.isFinite(result.population) && result.population >= MAJOR_POPULATION),
     }))
     .filter((result) => isPlace(result.place))
     .map((result) => ({ place: cleanPlace(result.place), major: result.major }));
@@ -115,7 +111,7 @@ export function parsePhoton(raw, query) {
 
 const sameResult = (a, b) => foldText(a.name) === foldText(b.name) && Math.abs(a.lat - b.lat) < 0.3 && Math.abs(a.lon - b.lon) < 0.3;
 
-/** İki kaynağı birleştirir: önce büyük şehirler, sonra Türkiye'deki yerler, sonra diğerleri; aynı yer bir kez. */
+/** İki kaynağı birleştirir: önce il ve ilçe merkezleri ile büyük şehirler, sonra Türkiye'deki yerler, sonra diğerleri; aynı yer bir kez. */
 export function mergePlaces(openMeteo, photon, max = MAX_RESULTS) {
   const ordered = [
     ...openMeteo.filter((result) => result.major).map((result) => result.place),
@@ -138,6 +134,16 @@ export function parseLocation(raw, lat, lon) {
   if (!name) return null;
   const province = text(raw?.principalSubdivision);
   return cleanPlace({ id: HERE_ID, name, region: province === name ? '' : province, country: raw?.countryName, lat, lon });
+}
+
+/**
+ * "Konumumu kullan" ile açılan yer kaydedilirken: koordinat yaklaşık 1 km'ye yuvarlanır, tam konum saklanmaz.
+ * Kimlik koordinattan gelir; HERE_ID ile kaydedilse iki farklı konum aynı yer sayılırdı.
+ */
+export function placeFromLocation(place, fallbackName) {
+  const lat = Math.round(place.lat * 100) / 100;
+  const lon = Math.round(place.lon * 100) / 100;
+  return cleanPlace({ ...place, id: `loc-${lat}_${lon}`, name: place.name || fallbackName, lat, lon });
 }
 
 /** "Ege, Türkiye" gibi ikinci satır; boş alanlar atlanır. */
