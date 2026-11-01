@@ -52,6 +52,10 @@ export function convertWind(kmh, unit) {
 }
 
 const num = (value) => (typeof value === 'number' && Number.isFinite(value) ? value : null);
+const between = (value, min, max) => {
+  const number = num(value);
+  return number !== null && number >= min && number <= max ? number : null;
+};
 const cell = (block, key, index) => (Array.isArray(block?.[key]) ? num(block[key][index]) : null);
 
 /** Şu anki saatten başlayarak sonraki saatler. Saatler "2026-09-30T14:00" biçiminde, şehrin yerel saatiyle gelir. */
@@ -129,6 +133,8 @@ export function parseForecast(raw) {
       feels: num(current.apparent_temperature),
       humidity: num(current.relative_humidity_2m),
       wind: num(current.wind_speed_10m),
+      windFrom: between(current.wind_direction_10m, 0, 360),
+      pressure: between(current.pressure_msl, 850, 1100), // deniz seviyesinde görülebilecek aralık
       code: num(current.weather_code),
       isDay: current.is_day !== 0,
     },

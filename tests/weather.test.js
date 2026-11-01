@@ -72,7 +72,7 @@ test('forecast: current values are validated, extras are ignored', () => {
     current: { time: '2026-09-30T13:45', temperature_2m: 21.3, apparent_temperature: 'hot', relative_humidity_2m: 60, wind_speed_10m: 12, weather_code: 2, is_day: 0, extra: '<b>' },
     hourly,
   });
-  assert.deepEqual(forecast.current, { time: '2026-09-30T13:45', temp: 21.3, feels: null, humidity: 60, wind: 12, code: 2, isDay: false });
+  assert.deepEqual(forecast.current, { time: '2026-09-30T13:45', temp: 21.3, feels: null, humidity: 60, wind: 12, windFrom: null, pressure: null, code: 2, isDay: false });
   assert.equal(forecast.hours.length, 4);
   assert.deepEqual(forecast.days, []);
 });
@@ -103,4 +103,17 @@ test('local time follows daylight saving time', () => {
   const winter = Date.UTC(2026, 11, 1, 12, 0); // kışın UTC+0
   assert.equal(localTime({ timeZone: 'Europe/London', utcOffset: 0 }, summer), '13:00');
   assert.equal(localTime({ timeZone: 'Europe/London', utcOffset: 0 }, winter), '12:00');
+});
+
+test('forecast: wind direction and pressure outside the possible range are dropped', () => {
+  const base = { time: '2026-09-30T13:45', temperature_2m: 21 };
+  const good = parseForecast({ current: { ...base, wind_direction_10m: 45, pressure_msl: 1009.4 } }).current;
+  assert.equal(good.windFrom, 45);
+  assert.equal(good.pressure, 1009.4);
+  const bad = parseForecast({ current: { ...base, wind_direction_10m: 720, pressure_msl: 40 } }).current;
+  assert.equal(bad.windFrom, null);
+  assert.equal(bad.pressure, null);
+  const wrongType = parseForecast({ current: { ...base, wind_direction_10m: 'north', pressure_msl: '1009' } }).current;
+  assert.equal(wrongType.windFrom, null);
+  assert.equal(wrongType.pressure, null);
 });
