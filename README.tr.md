@@ -48,7 +48,7 @@ Sade HTML, CSS ve JavaScript ile yazılmış bir hava durumu uygulaması. Bir ş
 - [Open-Meteo](https://open-meteo.com): tahminler ve dünya şehirleri araması (GeoNames)
 - komoot'un [Photon](https://photon.komoot.io) servisi: Türkiye içi arama (OpenStreetMap)
 - [BigDataCloud](https://www.bigdatacloud.com/free-api/free-reverse-geocode-to-city-api): konumun adı
-- `node --test`: 75 birim testi
+- `node --test`: 76 birim testi
 - Sıkı bir Content Security Policy ile Vercel
 - **API anahtarı ve npm bağımlılığı yok**
 
