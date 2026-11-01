@@ -4,42 +4,42 @@
   src: url('/fonts/familjen-grotesk-latin-400.woff2') format('woff2');
   font-weight: 400;
   font-display: swap;
-  unicode-range: U+0000-00FF, U+2013-2014, U+2026, U+2190;
+  unicode-range: U+0000-00FF, U+0131, U+2000-206F, U+2190-2193, U+2212;
 }
 @font-face {
   font-family: 'Familjen Grotesk';
   src: url('/fonts/familjen-grotesk-latin-ext-400.woff2') format('woff2');
   font-weight: 400;
   font-display: swap;
-  unicode-range: U+0100-02FF;
+  unicode-range: U+0100-0130, U+0132-02FF;
 }
 @font-face {
   font-family: 'Familjen Grotesk';
   src: url('/fonts/familjen-grotesk-latin-500.woff2') format('woff2');
   font-weight: 500;
   font-display: swap;
-  unicode-range: U+0000-00FF, U+2013-2014, U+2026, U+2190;
+  unicode-range: U+0000-00FF, U+0131, U+2000-206F, U+2190-2193, U+2212;
 }
 @font-face {
   font-family: 'Familjen Grotesk';
   src: url('/fonts/familjen-grotesk-latin-ext-500.woff2') format('woff2');
   font-weight: 500;
   font-display: swap;
-  unicode-range: U+0100-02FF;
+  unicode-range: U+0100-0130, U+0132-02FF;
 }
 @font-face {
   font-family: 'Familjen Grotesk';
   src: url('/fonts/familjen-grotesk-latin-700.woff2') format('woff2');
   font-weight: 700;
   font-display: swap;
-  unicode-range: U+0000-00FF, U+2013-2014, U+2026, U+2190;
+  unicode-range: U+0000-00FF, U+0131, U+2000-206F, U+2190-2193, U+2212;
 }
 @font-face {
   font-family: 'Familjen Grotesk';
   src: url('/fonts/familjen-grotesk-latin-ext-700.woff2') format('woff2');
   font-weight: 700;
   font-display: swap;
-  unicode-range: U+0100-02FF;
+  unicode-range: U+0100-0130, U+0132-02FF;
 }
 
 :root {
