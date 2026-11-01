@@ -48,7 +48,7 @@ A weather app in plain HTML, CSS and JavaScript. Search any city or district, or
 - [Open-Meteo](https://open-meteo.com): forecasts and world city search (GeoNames)
 - [Photon](https://photon.komoot.io) by komoot: search in Türkiye (OpenStreetMap)
 - [BigDataCloud](https://www.bigdatacloud.com/free-api/free-reverse-geocode-to-city-api): the name of your location
-- `node --test`: 75 unit tests
+- `node --test`: 76 unit tests
 - Vercel, with a strict Content Security Policy
 - **No API keys and no npm dependencies**
 
